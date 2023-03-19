@@ -6,6 +6,8 @@
 
         public string DatabaseName { get; set; } = null!;
 
-        public string CollectionName { get; set; } = null!;
+        public string ScenarioCollectionName { get; set; } = null!;
+
+        public string UserCollectionName { get; set; } = null!;
     }
 }
