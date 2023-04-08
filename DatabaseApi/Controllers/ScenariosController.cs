@@ -18,8 +18,11 @@ namespace DatabaseApi.Controllers
             _Service = _service;
 
         [HttpGet]
-        public async Task<List<Scenario>> Get() =>
-            await _Service.GetScenarioAsync();
+        public async Task<List<Scenario>> FindAll()
+        {
+            var scenarios = await _Service.GetScenarioAsync();
+            return scenarios;
+        }
 
         [HttpGet("{id:length(24)}")]
         public async Task<ActionResult<Scenario>> Get(string id)

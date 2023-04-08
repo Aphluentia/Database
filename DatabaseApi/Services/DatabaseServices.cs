@@ -19,6 +19,7 @@ namespace DatabaseApi.Services
             var mongoDatabase = mongoClient.GetDatabase(
                 databaseSettings.Value.DatabaseName);
 
+
             _scenarios = mongoDatabase.GetCollection<Scenario>(
                 databaseSettings.Value.ScenarioCollectionName);
             _users = mongoDatabase.GetCollection<User>(

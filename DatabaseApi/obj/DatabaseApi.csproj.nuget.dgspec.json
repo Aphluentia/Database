@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "H:\\Github\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj": {}
+    "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj": {}
   },
   "projects": {
-    "H:\\Github\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj": {
+    "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "H:\\Github\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj",
+        "projectUniqueName": "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj",
         "projectName": "DatabaseApi",
-        "projectPath": "H:\\Github\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj",
-        "packagesPath": "C:\\Users\\pedro\\.nuget\\packages\\",
-        "outputPath": "H:\\Github\\DatabaseModule\\DatabaseApi\\obj\\",
+        "projectPath": "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj",
+        "packagesPath": "C:\\Users\\E1493\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\pedro\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\E1493\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -80,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
         }
       }
     }
