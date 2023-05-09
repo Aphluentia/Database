@@ -1,5 +1,4 @@
 ﻿using DatabaseApi.Models.Dtos.Entities;
-using DatabaseApi.Models.Dtos.Enums;
 using DatabaseApi.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,9 +12,9 @@ namespace DatabaseApi.Controllers
     public class UserController : ControllerBase
     {
 
-        private readonly DatabaseServices _Service;
+        private readonly UserServices _Service;
 
-        public UserController(DatabaseServices _service) =>
+        public UserController(UserServices _service) =>
             _Service = _service;
 
         [HttpGet]
@@ -23,54 +22,94 @@ namespace DatabaseApi.Controllers
             await _Service.GetUserAsync();
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(string id)
+        public async Task<ActionResult<User>> FindByEmail(string email)
         {
-            var book = await _Service.GetUserAsync(id);
+            var user = await _Service.GetUserAsync(email);
 
-            if (book is null)
+            if (user is null)
             {
                 return NotFound();
             }
 
-            return book;
+            return user;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(User newBook)
+        public async Task<IActionResult> AddUser([FromBody] User newUser)
         {
-            await _Service.CreateUserAsync(newBook);
+            newUser.WebPlatformId = new Guid();
+            newUser.ActiveScenariosIds = new HashSet<string>();
+            if (newUser.PermissionLevel == null)
+            {
+                newUser.PermissionLevel = Models.Dtos.Enums.PermissionLevel.Client;
+            }
+            await _Service.CreateUserAsync(newUser);
 
-            return CreatedAtAction(nameof(Get), new { id = newBook.Email }, newBook);
+            return CreatedAtAction(nameof(AddUser), new { id = newUser.Email }, newUser);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, User updatedUser)
+        [HttpPut("{email}")]
+        public async Task<IActionResult> Update(string email, [FromBody] User updatedUser)
         {
-            var book = await _Service.GetUserAsync(id);
+            var user = await _Service.GetUserAsync(email);
 
-            if (book is null)
+            if (user is null)
             {
                 return NotFound();
             }
 
-            updatedUser.Email = book.Email;
+            if (updatedUser.Name!=null) user.Name = updatedUser.Name;
+            if (updatedUser.Password!=null) user.Password = updatedUser.Password;
+            if (updatedUser.PermissionLevel!=null) user.PermissionLevel = updatedUser.PermissionLevel;
 
-            await _Service.UpdateUserAsync(id, updatedUser);
+            await _Service.UpdateUserAsync(email, user);
+
+            return NoContent();
+        }
+        [HttpPost("{email}/Scenario")]
+        public async Task<IActionResult> AddScenario(string email, [FromBody] string ScenarioId)
+        {
+            var user = await _Service.GetUserAsync(email);
+
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            user.ActiveScenariosIds.Add(ScenarioId);
+
+            await _Service.UpdateUserAsync(email, user);
+
+            return NoContent();
+        }
+        [HttpDelete("{email}/Scenario")]
+        public async Task<IActionResult> DeleteScenario(string email, [FromBody] string ScenarioId)
+        {
+            var user = await _Service.GetUserAsync(email);
+
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            user.ActiveScenariosIds.Remove(ScenarioId);
+
+            await _Service.UpdateUserAsync(email, user);
 
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        [HttpDelete("{email}")]
+        public async Task<IActionResult> Delete(string email)
         {
-            var book = await _Service.GetUserAsync(id);
+            var user = await _Service.GetUserAsync(email);
 
-            if (book is null)
+            if (user is null)
             {
                 return NotFound();
             }
 
-            await _Service.RemoveUserAsync(id);
+            await _Service.RemoveUserAsync(email);
 
             return NoContent();
         }
@@ -79,78 +118,6 @@ namespace DatabaseApi.Controllers
         {
             
             await _Service.PurgeUsersAsync();
-
-            return NoContent();
-        }
-
-        [HttpPut("{userId}/Scenarios/{ScenarioId}")]
-        public async Task<IActionResult> AddScenarioToUser(string userId, string ScenarioId)
-        {
-            var User = await _Service.GetUserAsync(userId);
-
-            if (User is null)
-            {
-                return NotFound();
-            }
-
-            User.ActiveScenariosIds.Add(ScenarioId);
-
-            await _Service.UpdateUserAsync(userId, User);
-
-            return NoContent();
-        }
-
-        [HttpDelete("{userId}/Scenarios/{ScenarioId}")]
-        public async Task<IActionResult> RemoveScenarioFromUser(string userId, string ScenarioId)
-        {
-            var User = await _Service.GetUserAsync(userId);
-
-            if (User is null)
-            {
-                return NotFound();
-            }
-
-            User.ActiveScenariosIds.Remove(ScenarioId);
-
-            await _Service.UpdateUserAsync(userId, User);
-
-            return NoContent();
-        }
-
-        [HttpPut("{userId}/Connection")]
-        public async Task<IActionResult> AddConnection(string userId, Connection newConnection)
-        {
-            var User = await _Service.GetUserAsync(userId);
-
-            if (User is null)
-            {
-                return NotFound();
-            }
-            // If trying to add a different module when a connection of AppType already exists
-            if (User.Connections.Any(x=> x.ApplicationType == newConnection.ApplicationType))
-            {
-                return BadRequest("Connection Already Exists");
-            }
-            User.Connections.Add(newConnection);
-
-            await _Service.UpdateUserAsync(userId, User);
-
-            return NoContent();
-        }
-
-        [HttpDelete("{userId}/Connection/{ConnectionId}")]
-        public async Task<IActionResult> RemoveConnection(string userId, ApplicationType appType)
-        {
-            var User = await _Service.GetUserAsync(userId);
-
-            if (User is null)
-            {
-                return NotFound();
-            }
-            if (User.Connections.Any(x=> x.ApplicationType == appType))
-                User.Connections.Remove(User.Connections.First(x => x.ApplicationType == appType));
-
-            await _Service.UpdateUserAsync(userId, User);
 
             return NoContent();
         }

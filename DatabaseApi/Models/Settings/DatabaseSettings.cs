@@ -9,5 +9,6 @@
         public string ScenarioCollectionName { get; set; } = null!;
 
         public string UserCollectionName { get; set; } = null!;
+        public string ModulesCollectionName { get; set; } = null!;
     }
 }
