@@ -21,7 +21,7 @@ namespace DatabaseApi.Controllers
         public async Task<List<User>> Get() =>
             await _Service.GetUserAsync();
 
-        [HttpGet("{id}")]
+        [HttpGet("{email}")]
         public async Task<ActionResult<User>> FindByEmail(string email)
         {
             var user = await _Service.GetUserAsync(email);
@@ -34,15 +34,16 @@ namespace DatabaseApi.Controllers
             return user;
         }
 
+
         [HttpPost]
         public async Task<IActionResult> AddUser([FromBody] User newUser)
         {
-            newUser.WebPlatformId = new Guid();
-            newUser.ActiveScenariosIds = new HashSet<string>();
-            if (newUser.PermissionLevel == null)
-            {
-                newUser.PermissionLevel = Models.Dtos.Enums.PermissionLevel.Client;
-            }
+            
+            newUser.WebPlatformId = Guid.NewGuid();
+            if (newUser.ActiveScenariosIds == null)
+                newUser.ActiveScenariosIds = new HashSet<string>();
+            if (newUser.ModuleIds == null)
+                newUser.ModuleIds = new HashSet<string>();
             await _Service.CreateUserAsync(newUser);
 
             return CreatedAtAction(nameof(AddUser), new { id = newUser.Email }, newUser);

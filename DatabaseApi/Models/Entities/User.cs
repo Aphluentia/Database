@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using DatabaseApi.Models.Dtos.Enums;
 
 namespace DatabaseApi.Models.Dtos.Entities
 {
@@ -15,7 +14,7 @@ namespace DatabaseApi.Models.Dtos.Entities
         public ISet<string>? ActiveScenariosIds { get; set; }
 
         public string Password { get; set; }
-        public PermissionLevel? PermissionLevel { get; set; }
+        public int? PermissionLevel { get; set; }
 
     }
 }

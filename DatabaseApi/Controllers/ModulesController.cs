@@ -1,7 +1,10 @@
-﻿using DatabaseApi.Models.Entities;
+﻿using DatabaseApi.Models.Dto;
+using DatabaseApi.Models.Entities;
 using DatabaseApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -18,15 +21,33 @@ namespace DatabaseApi.Controllers
             _Service = _service;
         // GET: api/<ModulesController>
         [HttpGet]
-        public async Task<ICollection<Module>> Get()
+        public async Task<ICollection<ModulesOutputDto>> Get()
         {
-            return await _Service.GetModulesAsync();
+            var modules = await _Service.GetModulesAsync();
+            List<ModulesOutputDto> output = new List<ModulesOutputDto>();
+            modules.ForEach(c =>
+            {
+
+                output.Add(new ModulesOutputDto
+                {
+                    Id = c.Id,
+                    ModuleType = c.ModuleType,
+                    Data = JsonDocument.Parse(c.Data)
+                }); ;
+            });
+            return output;
         }
         
         [HttpGet("{id}")]
-        public async Task<Module?> Get(string id)
+        public async Task<ModulesOutputDto?> Get(string id)
         {
-            return await _Service.GetModulesAsync(id);
+            var module = await _Service.GetModulesAsync(id);
+            return new ModulesOutputDto
+            {
+                Id = module.Id,
+                ModuleType = module.ModuleType,
+                Data = JsonDocument.Parse(module.Data)
+            };
         }
 
         // POST api/<ModulesController>
@@ -35,14 +56,15 @@ namespace DatabaseApi.Controllers
         {
             try
             {
-                JsonDocument.Parse(value.Data);
+                JsonDocument.Parse(value.Data.ToString());
+                await _Service.CreateModulesAsync(value);
+                return NoContent();
             }
             catch (JsonException ex)
             {
                 return BadRequest();
             }
-            await _Service.CreateModulesAsync(value);
-            return NoContent();
+            
         }
 
         // PUT api/<ModulesController>/5
@@ -51,7 +73,7 @@ namespace DatabaseApi.Controllers
         {
             try
             {
-                JsonDocument.Parse(value.Data);
+                JsonDocument.Parse(value.Data.ToString());
             }
             catch (JsonException ex)
             {
@@ -66,6 +88,13 @@ namespace DatabaseApi.Controllers
         public async Task<StatusCodeResult> Delete(string id)
         {
             await _Service.RemoveModulesAsync(id);
+            return NoContent();
+        }
+
+        [HttpDelete]
+        public async Task<StatusCodeResult> Purge()
+        {
+            await _Service.PurgeModulesAsync();
             return NoContent();
         }
     }

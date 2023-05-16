@@ -1,13 +1,11 @@
 ﻿using MongoDB.Bson;
-using System.Text.Json.Nodes;
 
-namespace DatabaseApi.Models.Entities
+namespace DatabaseApi.Models.Dto
 {
-    public class Module
+    public class ModulesInputDto
     {
         public int ModuleType { get; set; }
         public string Id { get; set; }
         public string Data { get; set; }
-
     }
 }

@@ -133,3 +133,4 @@ R:\Aphluentia\DatabaseModule\DatabaseApi\obj\Debug\net6.0\refint\DatabaseApi.dll
 R:\Aphluentia\DatabaseModule\DatabaseApi\obj\Debug\net6.0\DatabaseApi.pdb
 R:\Aphluentia\DatabaseModule\DatabaseApi\obj\Debug\net6.0\DatabaseApi.genruntimeconfig.cache
 R:\Aphluentia\DatabaseModule\DatabaseApi\obj\Debug\net6.0\ref\DatabaseApi.dll
+C:\Users\E1493\source\repos\Aphluentia\DatabaseModule\DatabaseApi\bin\Debug\net6.0\Newtonsoft.Json.dll
