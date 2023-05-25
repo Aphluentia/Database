@@ -21,8 +21,12 @@ namespace DatabaseApi.Services
         public async Task<List<User>> GetUserAsync() =>
            await _users.Find(_ => true).ToListAsync();
 
+        
         public async Task<User?> GetUserAsync(string email) =>
             await _users.Find(x => x.Email == email).FirstOrDefaultAsync();
+
+        public async Task<ICollection<string>?> GetUserModulesAsync(string email) =>
+            (await _users.Find(x => x.Email == email).FirstOrDefaultAsync())?.Modules;
 
         public async Task<bool?> ExistsWebPlatformId(string WebPlatformId) =>
             await _users.Find(x => x.WebPlatformId == new Guid(WebPlatformId)).FirstOrDefaultAsync() != null;
@@ -38,5 +42,7 @@ namespace DatabaseApi.Services
 
         public async Task PurgeUsersAsync() =>
             await _users.DeleteManyAsync(x => true);
+        public async Task<bool> Contains(string Email) =>
+          await _users.Find(x => x.Email == Email).FirstOrDefaultAsync() != null;
     }
 }

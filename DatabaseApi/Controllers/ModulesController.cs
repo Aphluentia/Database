@@ -32,7 +32,9 @@ namespace DatabaseApi.Controllers
                 {
                     Id = c.Id,
                     ModuleType = c.ModuleType,
-                    Data = JsonDocument.Parse(c.Data)
+                    Data = $"@{c.Data}",
+                    DateTime = c.DateTime,
+                    Checksum = c.Checksum
                 }); ;
             });
             return output;
@@ -42,11 +44,15 @@ namespace DatabaseApi.Controllers
         public async Task<ModulesOutputDto?> Get(string id)
         {
             var module = await _Service.GetModulesAsync(id);
+            if (module == null)
+                return null;
             return new ModulesOutputDto
             {
                 Id = module.Id,
                 ModuleType = module.ModuleType,
-                Data = JsonDocument.Parse(module.Data)
+                Data = $"@{module.Data}",
+                DateTime = module.DateTime,
+                Checksum = module.Checksum
             };
         }
 
@@ -58,7 +64,7 @@ namespace DatabaseApi.Controllers
             {
                 JsonDocument.Parse(value.Data.ToString());
                 await _Service.CreateModulesAsync(value);
-                return NoContent();
+                return Ok();
             }
             catch (JsonException ex)
             {

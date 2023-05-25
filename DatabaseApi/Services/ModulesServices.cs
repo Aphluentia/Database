@@ -1,4 +1,5 @@
-﻿using DatabaseApi.Models.Dtos.Entities;
+﻿using DatabaseApi.Models.Dto;
+using DatabaseApi.Models.Dtos.Entities;
 using DatabaseApi.Models.Entities;
 using DatabaseApi.Models.Settings;
 using Microsoft.Extensions.Options;
