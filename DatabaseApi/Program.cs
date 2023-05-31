@@ -1,4 +1,4 @@
-using DatabaseApi.Models.Settings;
+using DatabaseApi.Configurations;
 using DatabaseApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,11 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.Configure<DatabaseSettings>(
-    builder.Configuration.GetSection("MongoDbDatabase"));
-builder.Services.AddSingleton<DatabaseServices>();
-builder.Services.AddSingleton<UserServices>();
+builder.Services.Configure<MongoConfigSection>(builder.Configuration.GetSection("MongoConfigSection"));
 builder.Services.AddSingleton<ModulesServices>();
+builder.Services.AddSingleton<UserServices>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

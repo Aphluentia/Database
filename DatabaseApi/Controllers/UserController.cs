@@ -1,5 +1,4 @@
-﻿using DatabaseApi.Models.Dtos.Entities;
-using DatabaseApi.Models.Entities;
+﻿using DatabaseApi.Models.Entities;
 using DatabaseApi.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,12 +23,12 @@ namespace DatabaseApi.Controllers
 
         [HttpGet]
         public async Task<List<User>> Get() =>
-            await _Service.GetUserAsync();
+            await _Service.FindAllAsync();
 
         [HttpGet("{email}")]
         public async Task<ActionResult<User>> FindByEmail(string email)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
@@ -43,15 +42,9 @@ namespace DatabaseApi.Controllers
         [HttpPost]
         public async Task<IActionResult> AddUser([FromBody] User newUser)
         {
-            
-            newUser.WebPlatformId = Guid.NewGuid();
-            if (newUser.ActiveScenariosIds == null)
-                newUser.ActiveScenariosIds = new HashSet<string>();
-            if (newUser.Modules == null)
-                newUser.Modules = new HashSet<string>();
             if (await _Service.Contains(newUser.Email))
                 return BadRequest();
-            await _Service.CreateUserAsync(newUser);
+            await _Service.CreateAsync(newUser);
 
             return CreatedAtAction(nameof(AddUser), new { id = newUser.Email }, newUser);
         }
@@ -59,71 +52,69 @@ namespace DatabaseApi.Controllers
         [HttpPut("{email}")]
         public async Task<IActionResult> Update(string email, [FromBody] User updatedUser)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            if (updatedUser.Name!=null) user.Name = updatedUser.Name;
-            if (updatedUser.Password!=null) user.Password = updatedUser.Password;
-            if (updatedUser.PermissionLevel!=null) user.PermissionLevel = updatedUser.PermissionLevel;
+            if (!string.IsNullOrEmpty(updatedUser.Name)) user.Name = updatedUser.Name;
+            if (!string.IsNullOrEmpty(updatedUser.Password)) user.Password = updatedUser.Password;
+            if (updatedUser.PermissionLevel>user.PermissionLevel) user.PermissionLevel = updatedUser.PermissionLevel;
 
-            await _Service.UpdateUserAsync(email, user);
+            await _Service.UpdateAsync(email, user);
 
             return NoContent();
         }
         [HttpPost("{email}/Scenario")]
         public async Task<IActionResult> AddScenario(string email, [FromBody] string ScenarioId)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            user.ActiveScenariosIds.Add(ScenarioId);
-
-            await _Service.UpdateUserAsync(email, user);
+            user.ActiveScenarios.Add(ScenarioId);
+            
+            await _Service.UpdateAsync(email, user);
 
             return NoContent();
         }
         [HttpDelete("{email}/Scenario")]
         public async Task<IActionResult> DeleteScenario(string email, [FromBody] string ScenarioId)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            user.ActiveScenariosIds.Remove(ScenarioId);
+            user.ActiveScenarios.Remove(ScenarioId);
 
-            await _Service.UpdateUserAsync(email, user);
+            await _Service.UpdateAsync(email, user);
 
             return NoContent();
         }
         [HttpPost("{email}/Connection")]
-        public async Task<IActionResult> CreateModuleConnection(string email, [FromBody] string ModuleId)
+        public async Task<IActionResult> CreateModuleConnection(string _Email, [FromBody] string _ModuleId)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(_Email);
 
             if (user is null)
             {
                 return NotFound();
             }
-            var module = await _ModuleService.GetModulesAsync(ModuleId);
+            var module = await _ModuleService.FindByIdAsync(_ModuleId);
             if (module is null)
             {
                 return NotFound();
             }
-            if (user.Modules.Any(c => c == ModuleId)) user.Modules.Remove(ModuleId);
-
-            user.Modules.Add(ModuleId);
-            await _Service.UpdateUserAsync(email, user);
+           
+            await _Service.AddModuleConnectionAsync(new ModuleConnection { ModuleId = _ModuleId, Email = _Email });
 
             return NoContent();
         }
@@ -131,31 +122,29 @@ namespace DatabaseApi.Controllers
         [HttpGet("{email}/Connection")]
         public async Task<ActionResult<ICollection<string>>> GetModuleConnections(string email)
         {
-            var user = await _Service.GetUserModulesAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            return Ok(user);
+            return Ok(user.Modules);
         }
         [HttpDelete("{email}/Connection")]
-        public async Task<IActionResult> CloseModuleConnection(string email, [FromQuery] string ModuleId)
+        public async Task<IActionResult> CloseModuleConnection(string _email, [FromQuery] string _moduleId)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(_email);
             if (user is null)
             {
                 return NotFound();
             }
-            var module = user.Modules.FirstOrDefault(c => c == ModuleId);
+            var module = user.Modules.FirstOrDefault(c => c == _moduleId);
             if (module is null)
             {
                 return NotFound();
             }
-            user.Modules.Remove(ModuleId);
-
-            await _Service.UpdateUserAsync(email, user);
+            await _Service.RemoveModuleConnectionAsync(new ModuleConnection { Email = _email, ModuleId = _moduleId });
 
             return NoContent();
         }
@@ -163,14 +152,14 @@ namespace DatabaseApi.Controllers
         [HttpDelete("{email}")]
         public async Task<IActionResult> Delete(string email)
         {
-            var user = await _Service.GetUserAsync(email);
+            var user = await _Service.FindByIdAsync(email);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            await _Service.RemoveUserAsync(email);
+            await _Service.RemoveByIdAsync(email);
 
             return NoContent();
         }
@@ -178,7 +167,7 @@ namespace DatabaseApi.Controllers
         public async Task<IActionResult> Purge()
         {
             
-            await _Service.PurgeUsersAsync();
+            await _Service.RemoveAllAsync();
 
             return NoContent();
         }

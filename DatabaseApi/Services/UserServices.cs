@@ -1,15 +1,15 @@
-﻿using DatabaseApi.Models.Dtos.Entities;
-using DatabaseApi.Models.Settings;
+﻿using DatabaseApi.Configurations;
+using DatabaseApi.Models.Entities;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace DatabaseApi.Services
 {
-    public class UserServices
+    public class UserServices: IDatabaseProvider<User>
     {
 
         private readonly IMongoCollection<User> _users;
-        public UserServices(IOptions<DatabaseSettings> databaseSettings) 
+        public UserServices(IOptions<MongoConfigSection> databaseSettings) 
         {
             var mongoDatabase = new MongoClient(
                    databaseSettings.Value.ConnectionString).GetDatabase(databaseSettings.Value.DatabaseName);
@@ -18,31 +18,62 @@ namespace DatabaseApi.Services
                 databaseSettings.Value.UserCollectionName);
         }
 
-        public async Task<List<User>> GetUserAsync() =>
-           await _users.Find(_ => true).ToListAsync();
+        public async Task<List<User>> FindAllAsync()
+        {
+            return await _users.Find(_ => true).ToListAsync();
+        }
 
-        
-        public async Task<User?> GetUserAsync(string email) =>
-            await _users.Find(x => x.Email == email).FirstOrDefaultAsync();
+        public async Task<User?> FindByIdAsync(string id)
+        {
+            return await _users.Find(x => x.Email == id).FirstOrDefaultAsync();
+        }
 
-        public async Task<ICollection<string>?> GetUserModulesAsync(string email) =>
-            (await _users.Find(x => x.Email == email).FirstOrDefaultAsync())?.Modules;
+        public async Task CreateAsync(User newObject)
+        {
+            await _users.InsertOneAsync(newObject);
+        }
+
+        public async Task UpdateAsync(string id, User updatedObject)
+        {
+            await _users.ReplaceOneAsync(x => x.Email == id, updatedObject);
+        }
+
+        public async Task RemoveByIdAsync(string id)
+        {
+            await _users.DeleteOneAsync(x => x.Email == id);
+        }
+
+        public async Task RemoveAllAsync()
+        {
+            await _users.DeleteManyAsync(x => true);
+        }
+
+        public async Task AddModuleConnectionAsync(ModuleConnection connection)
+        {
+            var user = (await _users.Find(x => x.WebPlatformId.ToString() == connection.Email).FirstOrDefaultAsync());
+            if (user!= null)
+            {
+                user.Modules.Add(connection.ModuleId);
+                await this.UpdateAsync(user.Email, user);
+            }
+        }
+        public async Task RemoveModuleConnectionAsync(ModuleConnection connection)
+        {
+            var user = (await _users.Find(x => x.WebPlatformId.ToString() == connection.Email).FirstOrDefaultAsync());
+            if (user != null)
+            {
+                user.Modules.Remove(connection.ModuleId);
+                await this.UpdateAsync(user.Email, user);
+            }
+        }
+        public async Task<ICollection<string>?> RetrieveModulesAsync(string email) =>
+           (await _users.Find(x => x.Email == email).FirstOrDefaultAsync())?.Modules;
 
         public async Task<bool?> ExistsWebPlatformId(string WebPlatformId) =>
             await _users.Find(x => x.WebPlatformId == new Guid(WebPlatformId)).FirstOrDefaultAsync() != null;
 
-        public async Task CreateUserAsync(User newUser) =>
-            await _users.InsertOneAsync(newUser);
-
-        public async Task UpdateUserAsync(string email, User updatedUser) =>
-            await _users.ReplaceOneAsync(x => x.Email == email, updatedUser);
-
-        public async Task RemoveUserAsync(string email) =>
-            await _users.DeleteOneAsync(x => x.Email == email);
-
-        public async Task PurgeUsersAsync() =>
-            await _users.DeleteManyAsync(x => true);
         public async Task<bool> Contains(string Email) =>
           await _users.Find(x => x.Email == Email).FirstOrDefaultAsync() != null;
+
     }
 }

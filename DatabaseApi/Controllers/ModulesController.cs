@@ -1,9 +1,6 @@
-﻿using DatabaseApi.Models.Dto;
-using DatabaseApi.Models.Entities;
+﻿using DatabaseApi.Models.Entities;
 using DatabaseApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Text.Json;
 
@@ -21,19 +18,19 @@ namespace DatabaseApi.Controllers
             _Service = _service;
         // GET: api/<ModulesController>
         [HttpGet]
-        public async Task<ICollection<ModulesOutputDto>> Get()
+        public async Task<ICollection<Module>> Get()
         {
-            var modules = await _Service.GetModulesAsync();
-            List<ModulesOutputDto> output = new List<ModulesOutputDto>();
+            var modules = await _Service.FindAllAsync();
+            List<Module> output = new List<Module>();
             modules.ForEach(c =>
             {
 
-                output.Add(new ModulesOutputDto
+                output.Add(new Module
                 {
                     Id = c.Id,
                     ModuleType = c.ModuleType,
                     Data = $"@{c.Data}",
-                    DateTime = c.DateTime,
+                    Timestamp = c.Timestamp,
                     Checksum = c.Checksum
                 }); ;
             });
@@ -41,17 +38,17 @@ namespace DatabaseApi.Controllers
         }
         
         [HttpGet("{id}")]
-        public async Task<ModulesOutputDto?> Get(string id)
+        public async Task<Module?> Get(string id)
         {
-            var module = await _Service.GetModulesAsync(id);
+            var module = await _Service.FindByIdAsync(id);
             if (module == null)
                 return null;
-            return new ModulesOutputDto
+            return new Module
             {
                 Id = module.Id,
                 ModuleType = module.ModuleType,
                 Data = $"@{module.Data}",
-                DateTime = module.DateTime,
+                Timestamp = module.Timestamp,
                 Checksum = module.Checksum
             };
         }
@@ -63,7 +60,7 @@ namespace DatabaseApi.Controllers
             try
             {
                 JsonDocument.Parse(value.Data.ToString());
-                await _Service.CreateModulesAsync(value);
+                await _Service.CreateAsync(value);
                 return Ok();
             }
             catch (JsonException ex)
@@ -85,7 +82,7 @@ namespace DatabaseApi.Controllers
             {
                 return BadRequest();
             }
-            await _Service.UpdateModulesAsync(id, value);
+            await _Service.UpdateAsync(id, value);
             return NoContent();
         }
 
@@ -93,14 +90,14 @@ namespace DatabaseApi.Controllers
         [HttpDelete("{id}")]
         public async Task<StatusCodeResult> Delete(string id)
         {
-            await _Service.RemoveModulesAsync(id);
+            await _Service.RemoveByIdAsync(id);
             return NoContent();
         }
 
         [HttpDelete]
         public async Task<StatusCodeResult> Purge()
         {
-            await _Service.PurgeModulesAsync();
+            await _Service.RemoveAllAsync();
             return NoContent();
         }
     }
