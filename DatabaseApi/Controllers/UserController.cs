@@ -99,28 +99,25 @@ namespace DatabaseApi.Controllers
 
             return NoContent();
         }
-        [HttpPost("{email}/Connection")]
-        public async Task<IActionResult> CreateModuleConnection(string _Email, [FromBody] string _ModuleId)
+        [HttpPost("Connection")]
+        public async Task<IActionResult> CreateModuleConnection([FromBody] ModuleConnection moduleConnection)
         {
-            var user = await _Service.FindByIdAsync(_Email);
-
+            var user = await _Service.FindByIdAsync(moduleConnection.Email);
             if (user is null)
             {
                 return NotFound();
             }
-            var module = await _ModuleService.FindByIdAsync(_ModuleId);
+            var module = await _ModuleService.FindByIdAsync(moduleConnection.ModuleId);
             if (module is null)
             {
                 return NotFound();
             }
-           
-            await _Service.AddModuleConnectionAsync(new ModuleConnection { ModuleId = _ModuleId, Email = _Email });
-
+            await _Service.AddModuleConnectionAsync(new ModuleConnection { ModuleId = moduleConnection.ModuleId, Email = moduleConnection.Email });
             return NoContent();
         }
   
-        [HttpGet("{email}/Connection")]
-        public async Task<ActionResult<ICollection<string>>> GetModuleConnections(string email)
+        [HttpGet("Connection")]
+        public async Task<ActionResult<ICollection<string>>> GetModuleConnections([FromQuery] string email)
         {
             var user = await _Service.FindByIdAsync(email);
 
@@ -131,20 +128,20 @@ namespace DatabaseApi.Controllers
 
             return Ok(user.Modules);
         }
-        [HttpDelete("{email}/Connection")]
-        public async Task<IActionResult> CloseModuleConnection(string _email, [FromQuery] string _moduleId)
+        [HttpDelete("Connection")]
+        public async Task<IActionResult> CloseModuleConnection([FromQuery] ModuleConnection moduleConnection)
         {
-            var user = await _Service.FindByIdAsync(_email);
+            var user = await _Service.FindByIdAsync(moduleConnection.Email);
             if (user is null)
             {
                 return NotFound();
             }
-            var module = user.Modules.FirstOrDefault(c => c == _moduleId);
+            var module = user.Modules.FirstOrDefault(c => c == moduleConnection.ModuleId);
             if (module is null)
             {
                 return NotFound();
             }
-            await _Service.RemoveModuleConnectionAsync(new ModuleConnection { Email = _email, ModuleId = _moduleId });
+            await _Service.RemoveModuleConnectionAsync(new ModuleConnection { Email = moduleConnection.Email, ModuleId = moduleConnection.ModuleId });
 
             return NoContent();
         }
