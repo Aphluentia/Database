@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "IuDqxNEQ2BhC64BQVbA3T+jDWjnL4T2YjdkhPYWMEu7IdfpsbK4QpUDas4DeFt9WCy8DsOR6s53GZjI4/1iQQw==",
+  "dgSpecHash": "P8hen5YUi2M/78DUHJEAMBYkdMK4Pabvgy5XW8A8OrJG7QZTDloNrNPUnyRqG37naMzjo5zbH21hswCDs3QAKg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\E1493\\source\\repos\\Aphluentia\\DatabaseModule\\DatabaseApi\\DatabaseApi.csproj",
+  "projectFilePath": "C:\\Users\\E1493\\source\\repos\\Aphluentia\\Database\\DatabaseApi\\DatabaseApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\E1493\\.nuget\\packages\\awssdk.core\\3.7.100.14\\awssdk.core.3.7.100.14.nupkg.sha512",
     "C:\\Users\\E1493\\.nuget\\packages\\awssdk.securitytoken\\3.7.100.14\\awssdk.securitytoken.3.7.100.14.nupkg.sha512",

@@ -12,15 +12,15 @@ namespace DatabaseApi.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
-        private readonly ModulesServices _Service;
+        private readonly TherapistServices _Service;
 
-        public ModulesController(ModulesServices _service) =>
+        public ModulesController(TherapistServices _service) =>
             _Service = _service;
-        // GET: api/<ModulesController>
-        [HttpGet]
-        public async Task<ICollection<Module>> Get()
+
+        [HttpGet("{WebPlatformId}")]
+        public async Task<ICollection<Module>> Get(string WebPlatformId)
         {
-            var modules = await _Service.FindAllAsync();
+            var modules = await _Service.GetConnectedModulesAsync(WebPlatformId);
             List<Module> output = new List<Module>();
             modules.ForEach(c =>
             {
@@ -36,11 +36,11 @@ namespace DatabaseApi.Controllers
             });
             return output;
         }
-        
-        [HttpGet("{id}")]
-        public async Task<Module?> Get(string id)
+
+        [HttpGet("{WebPlatformId}/{ModuleId}")]
+        public async Task<Module?> Get(string WebPlatformId, string ModuleId)
         {
-            var module = await _Service.FindByIdAsync(id);
+            var module = await _Service.GetConnectedModulesByIdAsync(WebPlatformId, ModuleId);
             if (module == null)
                 return null;
             return new Module

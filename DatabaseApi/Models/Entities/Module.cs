@@ -6,10 +6,10 @@ namespace DatabaseApi.Models.Entities
 {
     public class Module
     {
-        public int ModuleType { get; set; }
         [BsonId]
         public string Id { get; set; }
         public string Data { get; set; }
+        public string ModuleTemplate { get; set; }
         public DateTime Timestamp { get; set; }
         public string Checksum { get; set; }
     }

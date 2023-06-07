@@ -5,7 +5,8 @@
 
         public string ConnectionString { get; set; }
         public string DatabaseName { get; set; }
-        public string UserCollectionName { get; set; }
-        public string ModulesCollectionName { get; set; }
+        public string TherapistCollectionName { get; set; }
+        public string PatientsCollectionName { get; set; }
+        public string ModuleTemplatesCollectionName { get; set; }
     }
 }
