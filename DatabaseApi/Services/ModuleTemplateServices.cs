@@ -5,7 +5,7 @@ using MongoDB.Driver;
 
 namespace DatabaseApi.Services
 {
-    public class ModuleTemplateServices: IModuleTemplates
+    public class ModuleTemplateServices: IModuleTemplatesService
     {
         private readonly IMongoCollection<ModuleTemplate> _moduleTemplates;
         public ModuleTemplateServices(IOptions<MongoConfigSection> databaseSettings)

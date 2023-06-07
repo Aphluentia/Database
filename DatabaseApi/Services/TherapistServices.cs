@@ -9,7 +9,6 @@ namespace DatabaseApi.Services
     {
 
         private readonly IMongoCollection<Therapist> _therapists;
-        private readonly IMongoCollection<Patient> _patients;
         public TherapistServices(IOptions<MongoConfigSection> databaseSettings) 
         {
             var mongoDatabase = new MongoClient(
@@ -17,8 +16,6 @@ namespace DatabaseApi.Services
 
             _therapists = mongoDatabase.GetCollection<Therapist>(
                 databaseSettings.Value.TherapistCollectionName);
-            _patients = mongoDatabase.GetCollection<Patient>(
-                databaseSettings.Value.PatientsCollectionName);
         }
 
         public async Task<List<Therapist>> FindAllAsync()
@@ -51,40 +48,25 @@ namespace DatabaseApi.Services
             await _therapists.DeleteManyAsync(x => true);
         }
 
-        public async Task<List<Patient>> GetTherapistPatients(string Email)
+        public async Task<ICollection<string>> GetPatients(string Email)
         {
             var therapist = await FindByIdAsync(Email);
-            if (therapist == null) return new List<Patient>();
-            var patients = new List<Patient>();
-            foreach(var patientEmail in therapist.Patients)
-            {
-                var pat = await _patients.Find(x => x.Email == patientEmail).FirstOrDefaultAsync();
-                if (pat != null)
-                    patients.Add(pat);
-            }
-            return patients;
+            if (therapist == null) return new List<string>();
+            return therapist.Patients;
         }
-        public async Task RemoveTherapistPatient(string Email, string PatientEmail)
+        public async Task RemovePatient(string Email, string PatientEmail)
         {
             var therapist = await FindByIdAsync(Email);
             if (therapist == null) return;
-            var patient = await _patients.Find(x => x.Email == PatientEmail).FirstOrDefaultAsync();
-            if (patient == null) return;
             therapist.Patients.Remove(PatientEmail);
-            patient.AssignedTherapist = "";
             await _therapists.ReplaceOneAsync(x => x.Email == Email, therapist);
-            await _patients.ReplaceOneAsync(x => x.Email == PatientEmail, patient);
         }
-        public async Task AddTherapistPatient(string Email, string PatientEmail)
+        public async Task AssignPatient(string Email, string PatientEmail)
         {
             var therapist = await FindByIdAsync(Email);
             if (therapist == null) return;
-            var patient = await _patients.Find(x => x.Email == PatientEmail).FirstOrDefaultAsync();
-            if (patient == null) return;
             therapist.Patients.Add(PatientEmail);
-            patient.AssignedTherapist = Email;
             await _therapists.ReplaceOneAsync(x => x.Email == Email, therapist);
-            await _patients.ReplaceOneAsync(x => x.Email == PatientEmail, patient);
         }
 
 

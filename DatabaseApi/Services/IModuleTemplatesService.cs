@@ -2,7 +2,7 @@
 
 namespace DatabaseApi.Services
 {
-    public interface IModuleTemplates
+    public interface IModuleTemplatesService
     {
         public Task<List<ModuleTemplate>> FindAllAsync();
         public Task<ModuleTemplate?> FindByIdAsync(string ModuleType);

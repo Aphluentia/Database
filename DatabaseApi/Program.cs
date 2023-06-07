@@ -8,8 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.Configure<MongoConfigSection>(builder.Configuration.GetSection("MongoConfigSection"));
-builder.Services.AddSingleton<ModulesServices>();
-builder.Services.AddSingleton<TherapistServices>();
+builder.Services.AddSingleton<ITherapistService, TherapistServices>();
+builder.Services.AddSingleton<IPatientService, PatientServices>();
+builder.Services.AddSingleton<IModuleTemplatesService, ModuleTemplateServices>();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

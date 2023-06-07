@@ -7,15 +7,12 @@ namespace DatabaseApi.Services
 {
     public class PatientServices: IPatientService
     {
-        private readonly IMongoCollection<Therapist> _therapists;
         private readonly IMongoCollection<Patient> _patients;
         public PatientServices(IOptions<MongoConfigSection> databaseSettings)
         {
             var mongoDatabase = new MongoClient(
                    databaseSettings.Value.ConnectionString).GetDatabase(databaseSettings.Value.DatabaseName);
 
-            _therapists = mongoDatabase.GetCollection<Therapist>(
-                databaseSettings.Value.TherapistCollectionName);
             _patients = mongoDatabase.GetCollection<Patient>(
                 databaseSettings.Value.PatientsCollectionName);
         }
@@ -102,11 +99,7 @@ namespace DatabaseApi.Services
         {
             var patient = await FindByIdAsync(Email);
             if (patient == null) return;
-            var therapist = await _therapists.Find(x => x.Email == TherapistEmail).FirstOrDefaultAsync();
-            if (therapist == null) return;
-            therapist.Patients.Add(Email);
             patient.AssignedTherapist = TherapistEmail;
-            await _therapists.ReplaceOneAsync(x => x.Email == TherapistEmail, therapist);
             await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
         }
 
@@ -114,12 +107,8 @@ namespace DatabaseApi.Services
         {
             var patient = await FindByIdAsync(Email);
             if (patient == null) return;
-            var therapist = await _therapists.Find(x => x.Email == TherapistEmail).FirstOrDefaultAsync();
-            if (therapist == null) return;
             if (patient.AssignedTherapist != TherapistEmail) return;
-            therapist.Patients.Remove(Email);
             patient.AssignedTherapist = "";
-            await _therapists.ReplaceOneAsync(x => x.Email == TherapistEmail, therapist);
             await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
         }
 

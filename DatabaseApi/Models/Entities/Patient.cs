@@ -1,7 +1,10 @@
-﻿namespace DatabaseApi.Models.Entities
+﻿using MongoDB.Bson.Serialization.Attributes;
+
+namespace DatabaseApi.Models.Entities
 {
     public class Patient
     {
+        [BsonId]
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
