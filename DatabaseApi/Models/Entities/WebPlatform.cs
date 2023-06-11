@@ -7,7 +7,7 @@ namespace DatabaseApi.Models.Entities
 
         [BsonId]
         public Guid WebPlatformId { get; set; }
-        public ISet<Module> Modules { get; set; } = new HashSet<Module>();
+        public ISet<string> Modules { get; set; } = new HashSet<string>();
         public ISet<string> ActiveScenarios { get; set; } = new HashSet<string>();
     }
 }

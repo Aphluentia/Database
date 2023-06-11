@@ -10,20 +10,19 @@ namespace DatabaseApi.Controllers
     public class ModuleTemplatesController : ControllerBase
     {
         private readonly IModuleTemplatesService _moduleTemplatesService;
-
         public ModuleTemplatesController(IModuleTemplatesService moduleTemplatesService)
         {
             _moduleTemplatesService = moduleTemplatesService;
         }
 
-        [HttpGet]
+        [HttpGet] //public Task<List<ModuleTemplate>> FindAllAsync();
         public async Task<ActionResult<List<ModuleTemplate>>> GetAllModuleTemplates()
         {
             var moduleTemplates = await _moduleTemplatesService.FindAllAsync();
             return Ok(moduleTemplates);
         }
-
-        [HttpGet("{moduleType}")]
+         
+        [HttpGet("{moduleType}")] //public Task<ModuleTemplate?> FindByIdAsync(string ModuleType);
         public async Task<ActionResult<ModuleTemplate>> GetModuleTemplateById(string moduleType)
         {
             var moduleTemplate = await _moduleTemplatesService.FindByIdAsync(moduleType);
@@ -31,36 +30,46 @@ namespace DatabaseApi.Controllers
             {
                 return NotFound();
             }
-
             return Ok(moduleTemplate);
         }
 
-        [HttpPost]
+        [HttpPost] //public Task<bool> CreateAsync(ModuleTemplate newObject);
         public async Task<ActionResult> CreateModuleTemplate(ModuleTemplate newModuleTemplate)
         {
-            await _moduleTemplatesService.CreateAsync(newModuleTemplate);
-            return Ok();
+            var success = await _moduleTemplatesService.CreateAsync(newModuleTemplate);
+            if (success)
+                return Ok();
+            return BadRequest();
         }
     
-        [HttpPut("{moduleType}")]
+        [HttpPut("{moduleType}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleTemplate updatedObject);
         public async Task<ActionResult> UpdateModuleTemplate(string moduleType, ModuleTemplate updatedModuleTemplate)
         {
-            await _moduleTemplatesService.UpdateAsync(moduleType, updatedModuleTemplate);
-            return Ok();
+            var existingModuleTemplate = await _moduleTemplatesService.FindByIdAsync(moduleType);
+            if (existingModuleTemplate == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(updatedModuleTemplate.HtmlCard)) existingModuleTemplate.HtmlCard = updatedModuleTemplate.HtmlCard;
+            if (!string.IsNullOrEmpty(updatedModuleTemplate.HtmlDashboard)) existingModuleTemplate.HtmlDashboard = updatedModuleTemplate.HtmlDashboard;
+            var success = await _moduleTemplatesService.UpdateAsync(moduleType, existingModuleTemplate);
+            if (success)
+                return Ok();
+            return BadRequest();
         }
 
-        [HttpDelete]
+        [HttpDelete] //public Task RemoveAllAsync();
         public async Task<ActionResult> RemoveAllModuleTemplates()
         {
             await _moduleTemplatesService.RemoveAllAsync();
             return Ok();
         }
 
-        [HttpDelete("{moduleType}")]
+        [HttpDelete("{moduleType}")] //public Task<bool> RemoveByIdAsync(string ModuleType);
         public async Task<ActionResult> RemoveModuleTemplate(string moduleType)
         {
-            await _moduleTemplatesService.RemoveByIdAsync(moduleType);
-            return Ok();
+            var success = await _moduleTemplatesService.RemoveByIdAsync(moduleType);
+            if (success)
+                return Ok();
+            return BadRequest();
         }
     }
 }

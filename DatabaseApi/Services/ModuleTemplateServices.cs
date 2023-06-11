@@ -2,6 +2,8 @@
 using DatabaseApi.Models.Entities;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Reflection;
+using ThirdParty.BouncyCastle.Utilities.IO.Pem;
 
 namespace DatabaseApi.Services
 {
@@ -17,9 +19,18 @@ namespace DatabaseApi.Services
                 databaseSettings.Value.ModuleTemplatesCollectionName);
         }
 
-        public async Task CreateAsync(ModuleTemplate newObject)
-        { 
+        public async Task<bool> CreateAsync(ModuleTemplate newObject)
+        {
+            if (await _moduleTemplates.Find(c => c.ModuleType == newObject.ModuleType).FirstOrDefaultAsync() != null) return false;
             await _moduleTemplates.InsertOneAsync(newObject);
+            return true;
+        }
+
+        public async Task<bool> Exists(string ModuleType)
+        {
+            if (await _moduleTemplates.Find(c => c.ModuleType == ModuleType).FirstOrDefaultAsync() == null)
+                return false;
+            return true;
         }
 
         public async Task<List<ModuleTemplate>> FindAllAsync()
@@ -37,14 +48,18 @@ namespace DatabaseApi.Services
             await _moduleTemplates.DeleteManyAsync(x => true);
         }
 
-        public async Task RemoveByIdAsync(string ModuleType)
+        public async Task<bool> RemoveByIdAsync(string ModuleType)
         {
+            if (await _moduleTemplates.Find(c => c.ModuleType == ModuleType).FirstOrDefaultAsync() == null) return false;
             await _moduleTemplates.DeleteOneAsync(x => x.ModuleType == ModuleType);
+            return true;
         }
 
-        public async Task UpdateAsync(string ModuleType, ModuleTemplate updatedObject)
+        public async Task<bool> UpdateAsync(string ModuleType, ModuleTemplate updatedObject)
         {
-            await _moduleTemplates.ReplaceOneAsync(x => x.ModuleType == ModuleType, updatedObject);
+            if (await _moduleTemplates.Find(c => c.ModuleType == ModuleType).FirstOrDefaultAsync() == null) return false;
+            if (!(await _moduleTemplates.ReplaceOneAsync(x => x.ModuleType == ModuleType, updatedObject)).IsAcknowledged) return false;
+            return true;
         }
     }
 }

@@ -8,5 +8,6 @@
         public string TherapistCollectionName { get; set; }
         public string PatientsCollectionName { get; set; }
         public string ModuleTemplatesCollectionName { get; set; }
+        public string ModulesCollectionName { get; set; }
     }
 }

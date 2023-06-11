@@ -27,91 +27,86 @@ namespace DatabaseApi.Services
             return await _patients.Find(x => x.Email == Email).FirstOrDefaultAsync();
         }
 
-        public async Task CreateAsync(Patient newObject)
+        public async Task<bool> CreateAsync(Patient newObject)
         {
+            if (await _patients.Find(c => c.Email == newObject.Email || c.WebPlatform.WebPlatformId == newObject.WebPlatform.WebPlatformId).FirstOrDefaultAsync() != null)
+                return false;
             await _patients.InsertOneAsync(newObject);
+            return true;
         }
 
-        public async Task UpdateAsync(string Email, Patient updatedObject)
+        public async Task<bool> UpdateAsync(string Email, Patient updatedObject)
         {
+            if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
+                return false;
             await _patients.ReplaceOneAsync(x => x.Email == Email, updatedObject);
+            return true;
         }
 
-        public async Task RemoveByIdAsync(string Email)
+        public async Task<bool> RemoveByIdAsync(string Email)
         {
+            if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
+                return false;
             await _patients.DeleteOneAsync(x => x.Email == Email);
+            return true;
         }
 
         public async Task RemoveAllAsync()
         {
             await _patients.DeleteManyAsync(x => true);
         }
-        public async Task<ICollection<Module>> GetModules(string Email)
+        public async Task<ICollection<string>?> GetModules(string Email)
+        {
+            if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
+                return null;
+            return (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync()).WebPlatform.Modules;
+        }
+        public async Task<bool> AssignModule(string Email, string ModuleId)
         {
             var patient = await FindByIdAsync(Email);
-            if (patient == null) return new List<Module>();
-            return patient.WebPlatform.Modules;
+            if (patient == null) return false;
+            patient.WebPlatform.Modules.Add(ModuleId);
+            var result =  await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
+            if (!result.IsAcknowledged) return false;
+            return true;
         }
 
-        public async Task<Module?> GetModulesById(string Email, string ModuleId)
+       
+        public async Task<bool> RevokeModule(string Email, string ModuleId)
         {
             var patient = await FindByIdAsync(Email);
-            if (patient == null) return null;
-            var module = patient.WebPlatform.Modules.FirstOrDefault(c => c.Id == ModuleId);
-            return module;
-        }
-        public async Task AddModule(string Email, Module Module)
-        {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return;
-            patient.WebPlatform.Modules.Add(Module);
-            await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
+            if (patient == null) return false;
+            patient.WebPlatform.Modules.Remove(ModuleId);
+            var result = await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
+            if (!result.IsAcknowledged) return false;
+            return true;
         }
 
-        public async Task UpdateModule(string Email, string ModuleId, Module updatedModule)
+        public async Task<bool> AssignTherapist(string Email, string TherapistEmail)
         {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return;
-
-            var module = patient.WebPlatform.Modules.FirstOrDefault(c=>c.Id == ModuleId);
-            if (module == null) return;
-            patient.WebPlatform.Modules.Remove(module);
-            if (!string.IsNullOrEmpty(updatedModule.Data)) module.Data = updatedModule.Data;
-            if (!string.IsNullOrEmpty(updatedModule.Checksum)) module.Checksum = updatedModule.Checksum;
-            if (updatedModule.Timestamp!=null) module.Timestamp = updatedModule.Timestamp;
-            patient.WebPlatform.Modules.Add(module);
-            await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
-        }
-
-        public async Task RemoveModule(string Email, string ModuleId)
-        {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return;
-
-            var module = patient.WebPlatform.Modules.FirstOrDefault(c => c.Id == ModuleId);
-            if (module == null) return;
-            patient.WebPlatform.Modules.Remove(module);
-            
-            await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
-        }
-
-        public async Task AssignTherapist(string Email, string TherapistEmail)
-        {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return;
+            var patient =  await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null || !string.IsNullOrEmpty(patient.AssignedTherapist)) return false;
             patient.AssignedTherapist = TherapistEmail;
-            await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
+            if (!(await _patients.ReplaceOneAsync(x => x.Email == Email, patient)).IsAcknowledged)
+                return false;
+            return true;
         }
 
-        public async Task RemoveTherapist(string Email, string TherapistEmail)
+        public async Task<bool> RemoveTherapist(string Email, string TherapistEmail)
         {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return;
-            if (patient.AssignedTherapist != TherapistEmail) return;
+            var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null || patient.AssignedTherapist != TherapistEmail) return false;
             patient.AssignedTherapist = "";
-            await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
+            if (!(await _patients.ReplaceOneAsync(x => x.Email == Email, patient)).IsAcknowledged)
+                return false;
+            return true;
         }
 
-        
+        public async Task<bool> Exists(string Email) 
+        {
+            var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null) return false;
+            return true;
+        }
     }
 }

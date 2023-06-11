@@ -10,6 +10,7 @@ namespace DatabaseApi.Models.Entities
         public string Id { get; set; }
         public string Data { get; set; }
         public string ModuleTemplate { get; set; }
+        public bool IsAssigned { get; set; } = false;
         public DateTime Timestamp { get; set; }
         public string Checksum { get; set; }
     }

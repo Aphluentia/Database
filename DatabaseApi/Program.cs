@@ -11,6 +11,7 @@ builder.Services.Configure<MongoConfigSection>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<ITherapistService, TherapistServices>();
 builder.Services.AddSingleton<IPatientService, PatientServices>();
 builder.Services.AddSingleton<IModuleTemplatesService, ModuleTemplateServices>();
+builder.Services.AddSingleton<IModuleService, ModuleService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
