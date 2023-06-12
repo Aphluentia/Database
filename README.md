@@ -6,5 +6,5 @@ Contains the Project Database and the API that performs CRUD operations
 - docker run -d --name mongodb -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=ROOT -e MONGO_INITDB_ROOT_PASSWORD=ROOT mongo  
 
 *API Setup*  
-- docker build . -t databaseapi  
-- docker run --name DatabaseApi -p 9030:443 -p 8030:80 -d databaseapi
+- docker build . -t databaseapi  cd ..
+- docker run --name DatabaseApi -p 9010:443 -p 8010:80 -d databaseapi

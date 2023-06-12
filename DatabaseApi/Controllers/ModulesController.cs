@@ -74,6 +74,8 @@ namespace DatabaseApi.Controllers
                 if (!await _MTService.Exists(updatedModule.ModuleTemplate)) return NotFound();
                 existingModule.ModuleTemplate = updatedModule.ModuleTemplate;
             }
+            existingModule.Timestamp = updatedModule.Timestamp;
+            existingModule.Checksum = updatedModule.Checksum;
             
             var success = await _Service.UpdateAsync(id, existingModule);
             if (success)
