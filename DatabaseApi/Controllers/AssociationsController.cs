@@ -11,13 +11,11 @@ namespace DatabaseApi.Controllers
     {
         private readonly IPatientService _patientService;
         private readonly ITherapistService _therapistService;
-        private readonly IModuleService _moduleService;
 
-        public AssociationsController(IPatientService patientService, ITherapistService therapistService, IModuleService moduleService)
+        public AssociationsController(IPatientService patientService, ITherapistService therapistService, IModuleService moduleService, IModuleRegistryService moduleRegistryService)
         {
             _patientService = patientService;
             _therapistService = therapistService;
-            _moduleService = moduleService;
         }
 
 
@@ -48,38 +46,7 @@ namespace DatabaseApi.Controllers
         }
 
 
-        //public Task<bool> AssignModule(string Email, string ModuleId);
-        //public Task<bool> RevokeModule(string Email, string ModuleId);
-        //public Task<bool> AssignModule(string Email, string ModuleId);
-        //public Task<bool> RevokeModule(string Email, string ModuleId);
-        [HttpGet("/api/AssignModule/{Patient}/{ModuleId}")]
-        public async Task<ActionResult> AssignModule(string Patient, string ModuleId)
-        {
-            if (await _patientService.Exists(Patient) && await _moduleService.Exists(ModuleId))
-            {
-                var result = await _patientService.AssignModule(Patient, ModuleId);
-                if (!result) return NotFound($"Couldn't assign module to patient {Patient}");
-                result = await _moduleService.AssignModule(Patient, ModuleId);
-                if (!result) return NotFound($"Couldn't assign patient to module {ModuleId} ");
-                return Ok();
-            }
-            return BadRequest();
-        }
-        [HttpDelete("/api/RevokeModule/{Patient}/{ModuleId}")]
-        public async Task<ActionResult> RevokeModule(string Patient, string ModuleId)
-        {
-            if (await _patientService.Exists(Patient) && await _moduleService.Exists(ModuleId))
-            {
-                var result = await _patientService.RevokeModule(Patient, ModuleId);
-                if (!result) return NotFound($"Couldn't revoke module from patient {Patient}");
-                await _moduleService.RevokeModule(Patient, ModuleId);
-                if (!result) return NotFound($"Couldn't revoke patient from module {ModuleId} ");
-                return Ok();
-            }
-            return BadRequest();
-        }
-
-
+       
 
 
     }

@@ -10,8 +10,6 @@ namespace DatabaseApi.Services
         public Task<bool> UpdateAsync(string ModuleId, Module updatedObject);
         public Task<bool> RemoveByIdAsync(string ModuleId);
         public Task RemoveAllAsync();
-        public Task<bool> AssignModule(string Email, string ModuleId);
-        public Task<bool> RevokeModule(string Email, string ModuleId);
         public Task<bool> Exists(string ModuleId);
     }
 }

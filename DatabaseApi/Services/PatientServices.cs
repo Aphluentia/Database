@@ -55,32 +55,7 @@ namespace DatabaseApi.Services
         {
             await _patients.DeleteManyAsync(x => true);
         }
-        public async Task<ICollection<string>?> GetModules(string Email)
-        {
-            if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
-                return null;
-            return (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync()).WebPlatform.Modules;
-        }
-        public async Task<bool> AssignModule(string Email, string ModuleId)
-        {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return false;
-            patient.WebPlatform.Modules.Add(ModuleId);
-            var result =  await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
-            if (!result.IsAcknowledged) return false;
-            return true;
-        }
-
        
-        public async Task<bool> RevokeModule(string Email, string ModuleId)
-        {
-            var patient = await FindByIdAsync(Email);
-            if (patient == null) return false;
-            patient.WebPlatform.Modules.Remove(ModuleId);
-            var result = await _patients.ReplaceOneAsync(x => x.Email == Email, patient);
-            if (!result.IsAcknowledged) return false;
-            return true;
-        }
 
         public async Task<bool> AssignTherapist(string Email, string TherapistEmail)
         {
@@ -106,6 +81,52 @@ namespace DatabaseApi.Services
         {
             var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (patient == null) return false;
+            return true;
+        }
+
+        public async Task<ICollection<Module>> GetModules(string Email)
+        {
+            if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
+                return null;
+            return (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync()).WebPlatform.Modules;
+        }
+
+        public async Task<bool> AddModule(string Email, Module module)
+        {
+            var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null)
+                return false;
+            if (patient.WebPlatform.Modules.Any(c => c.Id == module.Id)) return false;
+            patient.WebPlatform.Modules.Add(module);
+            if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
+            return true;
+        }
+
+        public async Task<bool> UpdateModule(string Email,string ModuleId, Module module)
+        {
+            var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null)
+                return false;
+            var m = patient.WebPlatform.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
+            if (m == null) return false;
+            patient.WebPlatform.Modules.Remove(m);
+            
+            patient.WebPlatform.Modules.Add(module);
+            if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
+            return true;
+        }
+
+        
+
+        public async Task<bool> RemoveModule(string Email, string ModuleId)
+        {
+            var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (patient == null)
+                return false;
+            var m = patient.WebPlatform.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
+            if (m == null) return false;
+            patient.WebPlatform.Modules.Remove(m);
+            if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
             return true;
         }
     }

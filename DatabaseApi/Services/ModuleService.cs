@@ -9,7 +9,7 @@ namespace DatabaseApi.Services
     public class ModuleService: IModuleService
     {
         private readonly IMongoCollection<Module> _modules;
-        private readonly IMongoCollection<ModuleTemplate> _moduleTemplates;
+        private readonly IMongoCollection<ModuleRegistry> _moduleTemplates;
         public ModuleService(IOptions<MongoConfigSection> databaseSettings)
         {
             var mongoDatabase = new MongoClient(
@@ -18,7 +18,7 @@ namespace DatabaseApi.Services
             _modules = mongoDatabase.GetCollection<Module>(
                 databaseSettings.Value.ModulesCollectionName);
 
-            _moduleTemplates = mongoDatabase.GetCollection<ModuleTemplate>(
+            _moduleTemplates = mongoDatabase.GetCollection<ModuleRegistry>(
                 databaseSettings.Value.ModuleTemplatesCollectionName);
         }
         public async Task<bool> CreateAsync(Module newObject)
@@ -57,24 +57,6 @@ namespace DatabaseApi.Services
             if (existingModule == null) return false;
             if (!(await _modules.ReplaceOneAsync(x => x.Id == moduleId, updatedModule)).IsAcknowledged) return false;
 
-            return true;
-        }
-        public async Task<bool> AssignModule(string Email, string ModuleId)
-        {
-            var module = await _modules.Find(c => c.Id == ModuleId).FirstOrDefaultAsync();
-            if (module == null || module.IsAssigned) return false;
-            module.IsAssigned = true;
-            var result = await _modules.ReplaceOneAsync(x => x.Id == ModuleId, module);
-            if (!result.IsAcknowledged) return false;
-            return true;
-        }
-        public async Task<bool> RevokeModule(string Email, string ModuleId)
-        {
-            var module = await _modules.Find(c => c.Id == ModuleId).FirstOrDefaultAsync();
-            if (module == null) return false;
-            module.IsAssigned = false;
-            var result = await _modules.ReplaceOneAsync(x => x.Id == ModuleId, module);
-            if (!result.IsAcknowledged) return false;
             return true;
         }
         public async Task<bool> Exists(string ModuleId)

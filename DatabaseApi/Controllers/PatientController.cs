@@ -11,10 +11,14 @@ namespace DatabaseApi.Controllers
     {
         private readonly IPatientService _patientService;
         private readonly ITherapistService _therapistService;
-        public PatientController(IPatientService patientService, ITherapistService therapistService)
+        private readonly IModuleService _moduleService;
+        private readonly IModuleRegistryService _moduleRegistryService;
+        public PatientController(IPatientService patientService, ITherapistService therapistService, IModuleService moduleService, IModuleRegistryService moduleRegistryService)
         {
             _patientService = patientService;
             _therapistService = therapistService;
+            _moduleService = moduleService;
+            _moduleRegistryService = moduleRegistryService;
         }
 
         [HttpGet] //public Task<List<Patient>> FindAllAsync();
@@ -39,6 +43,20 @@ namespace DatabaseApi.Controllers
         {
             if (!string.IsNullOrEmpty(newPatient.AssignedTherapist) && !(await _therapistService.Exists(newPatient.AssignedTherapist)))
                 return NotFound();
+            var modules = new List<Module>();
+            foreach(Module value in newPatient.WebPlatform.Modules)
+            {
+                if (string.IsNullOrEmpty(value.ModuleTemplate.ModuleName) || string.IsNullOrEmpty(value.ModuleTemplate.VersionId)) return BadRequest();
+
+                var moduleTemplate = await _moduleRegistryService.FindByIdAsync(value.ModuleTemplate.ModuleName);
+                if (moduleTemplate == null) return NotFound();
+
+                var moduleVersion = moduleTemplate.Versions.Where(c => c.VersionId == value.ModuleTemplate.VersionId).FirstOrDefault();
+                if (moduleVersion == null) return NotFound();
+
+                value.ModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
+                modules.Add(value);
+            }
 
             var success = await _patientService.CreateAsync(newPatient);
             if (success)
@@ -88,6 +106,46 @@ namespace DatabaseApi.Controllers
                 if (!(await _therapistService.Exists(updatedPatient.AssignedTherapist))) return NotFound();
                 existingPatient.AssignedTherapist = updatedPatient.AssignedTherapist;
             }
+
+            var modules = new List<Module>();
+            foreach (Module value in updatedPatient.WebPlatform.Modules)
+            {
+                if (await _moduleService.Exists(value.Id)) await _moduleService.RemoveByIdAsync(value.Id);
+                if (string.IsNullOrEmpty(value.ModuleTemplate.ModuleName) || string.IsNullOrEmpty(value.ModuleTemplate.VersionId)) return BadRequest();
+
+                var moduleTemplate = await _moduleRegistryService.FindByIdAsync(value.ModuleTemplate.ModuleName);
+                if (moduleTemplate == null) return NotFound();
+
+                var moduleVersion = moduleTemplate.Versions.Where(c => c.VersionId == value.ModuleTemplate.VersionId).FirstOrDefault();
+                if (moduleVersion == null) return NotFound();
+
+                var existingModule = existingPatient.WebPlatform.Modules.Where(c => c.Id == value.Id).FirstOrDefault();
+                if (existingModule != null){
+
+                    if (!string.IsNullOrEmpty(value.Data)) existingModule.Data = $"@{value.Data}";
+
+                    existingModule.Timestamp = value.Timestamp;
+                    existingModule.Checksum = value.Checksum;
+
+                    if (value.ModuleTemplate.VersionId != existingModule.ModuleTemplate.VersionId)
+                    {
+                        existingModule.ModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(value.ModuleTemplate.HtmlCard)) existingModule.ModuleTemplate.HtmlCard = value.ModuleTemplate.HtmlCard;
+                        if (!string.IsNullOrEmpty(value.ModuleTemplate.HtmlDashboard)) existingModule.ModuleTemplate.HtmlDashboard = value.ModuleTemplate.HtmlDashboard;
+                    }
+                }
+                else
+                {
+                    existingModule = value;
+                }
+                
+                modules.Add(existingModule);
+            }
+            existingPatient.WebPlatform.Modules = modules;
+
             var success = await _patientService.UpdateAsync(email, existingPatient);
             if (success)
                 return Ok();
@@ -110,5 +168,6 @@ namespace DatabaseApi.Controllers
             return Ok(modules);
         }
        
+
     }
 }

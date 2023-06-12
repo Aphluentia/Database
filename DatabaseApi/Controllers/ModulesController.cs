@@ -11,8 +11,8 @@ namespace DatabaseApi.Controllers
     public class ModulesController : ControllerBase
     {
         private readonly IModuleService _Service;
-        private readonly IModuleTemplatesService _MTService;
-        public ModulesController(IModuleService _service, IModuleTemplatesService _mtservice)
+        private readonly IModuleRegistryService _MTService;
+        public ModulesController(IModuleService _service, IModuleRegistryService _mtservice)
         {
             _Service = _service;
             _MTService = _mtservice;
@@ -32,8 +32,8 @@ namespace DatabaseApi.Controllers
             return Ok(module);
         }
 
-        [HttpPost] //public Task<bool> CreateAsync(Module newObject);
-        public async Task<StatusCodeResult> Post([FromBody] Module value)
+        [HttpPost]                       //public Task<bool> CreateAsync(Module newObject);
+        public async Task<StatusCodeResult> CreateModule([FromBody] Module value)
         {
             try
             {
@@ -43,9 +43,16 @@ namespace DatabaseApi.Controllers
             {
                 return BadRequest();
             }
-            
-            if (!await _MTService.Exists(value.ModuleTemplate)) return NotFound();
-            
+            if (string.IsNullOrEmpty(value.ModuleTemplate.ModuleName) || string.IsNullOrEmpty(value.ModuleTemplate.VersionId)) return BadRequest();
+
+            var moduleTemplate = await _MTService.FindByIdAsync(value.ModuleTemplate.ModuleName);
+            if (moduleTemplate == null) return NotFound();
+
+            var moduleVersion = moduleTemplate.Versions.Where(c=>c.VersionId == value.ModuleTemplate.VersionId).FirstOrDefault();
+            if (moduleVersion == null) return NotFound();
+
+            value.ModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
+
             var success = await _Service.CreateAsync(value);
             if (success)
                 return Ok();
@@ -69,19 +76,31 @@ namespace DatabaseApi.Controllers
 
             if (!string.IsNullOrEmpty(updatedModule.Data)) existingModule.Data = $"@{updatedModule.Data}";
 
-            if (!string.IsNullOrEmpty(updatedModule.ModuleTemplate))
-            {
-                if (!await _MTService.Exists(updatedModule.ModuleTemplate)) return NotFound();
-                existingModule.ModuleTemplate = updatedModule.ModuleTemplate;
-            }
             existingModule.Timestamp = updatedModule.Timestamp;
             existingModule.Checksum = updatedModule.Checksum;
-            
+
+            if (updatedModule.ModuleTemplate.VersionId != existingModule.ModuleTemplate.VersionId)
+            {
+
+                var moduleTemplate = await _MTService.FindByIdAsync(existingModule.ModuleTemplate.ModuleName);
+                if (moduleTemplate == null) return NotFound();
+
+                var moduleVersion = moduleTemplate.Versions.Where(c => c.VersionId == updatedModule.ModuleTemplate.VersionId).FirstOrDefault();
+                if (moduleVersion == null) return NotFound();
+
+                existingModule.ModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(updatedModule.ModuleTemplate.HtmlCard)) existingModule.ModuleTemplate.HtmlCard = updatedModule.ModuleTemplate.HtmlCard;
+                if (!string.IsNullOrEmpty(updatedModule.ModuleTemplate.HtmlDashboard)) existingModule.ModuleTemplate.HtmlDashboard = updatedModule.ModuleTemplate.HtmlDashboard;
+            }
             var success = await _Service.UpdateAsync(id, existingModule);
             if (success)
                 return Ok();
             return BadRequest();
         }
+       
 
         [HttpDelete("{id}")] //public Task<bool> RemoveByIdAsync(string ModuleId);
         public async Task<StatusCodeResult> Delete(string id)

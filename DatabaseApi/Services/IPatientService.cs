@@ -10,11 +10,13 @@ namespace DatabaseApi.Services
         public Task<bool> UpdateAsync(string Email, Patient updatedObject);
         public Task<bool> RemoveByIdAsync(string Email);
         public Task RemoveAllAsync();
-        public Task<ICollection<string>> GetModules(string Email);
-        public Task<bool> AssignModule(string Email, string ModuleId);
-        public Task<bool> RevokeModule(string Email, string ModuleId);
         public Task<bool> AssignTherapist(string Email, string TherapistEmail);
         public Task<bool> RemoveTherapist(string Email, string TherapistEmail);
         public Task<bool> Exists(string Email);
+
+        public Task<ICollection<Module>> GetModules(string Email);
+        public Task<bool> AddModule(string Email,Module module);
+        public Task<bool> UpdateModule(string Email, string ModuleName, Module module);
+        public Task<bool> RemoveModule(string Email, string ModuleName);
     }
 }

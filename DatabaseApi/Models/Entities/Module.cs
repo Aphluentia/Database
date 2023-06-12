@@ -9,8 +9,7 @@ namespace DatabaseApi.Models.Entities
         [BsonId]
         public string Id { get; set; }
         public string Data { get; set; }
-        public string ModuleTemplate { get; set; }
-        public bool IsAssigned { get; set; } = false;
+        public CustomModuleTemplate ModuleTemplate { get; set; }
         public DateTime Timestamp { get; set; }
         public string Checksum { get; set; }
     }
