@@ -13,7 +13,8 @@ namespace DatabaseApi.Models.Entities
         public string Credentials { get; set; }
         public string Description { get; set; }
         public string ProfilePicture { get; set; }
-        public HashSet<string> Patients { get; set; }
+        public HashSet<string> PatientsAccepted { get; set; }
+        public HashSet<string> PatientRequests { get; set; }
         public int PermissionLevel { get; set; } = 0;
 
     }

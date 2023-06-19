@@ -16,7 +16,8 @@ namespace DatabaseApi.Models.Entities
         public DateTime ConditionAcquisitionDate { get; set; }
         public string ProfilePicture { get; set; }
         public WebPlatform WebPlatform { get; set; }
-        public string AssignedTherapist { get; set; }
+        public HashSet<string> AcceptedTherapists { get; set; }
+        public HashSet<string> RequestedTherapists { get; set; }
 
 
 

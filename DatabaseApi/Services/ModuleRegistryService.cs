@@ -2,45 +2,34 @@
 using DatabaseApi.Models.Entities;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using System.Reflection;
-using ThirdParty.BouncyCastle.Utilities.IO.Pem;
 
 namespace DatabaseApi.Services
 {
     public class ModuleRegistryService: IModuleRegistryService
     {
-        private readonly IMongoCollection<ModuleRegistry> _moduleTemplates;
+        private readonly IMongoCollection<Application> _moduleTemplates;
         public ModuleRegistryService(IOptions<MongoConfigSection> databaseSettings)
         {
             var mongoDatabase = new MongoClient(
                    databaseSettings.Value.ConnectionString).GetDatabase(databaseSettings.Value.DatabaseName);
 
-            _moduleTemplates = mongoDatabase.GetCollection<ModuleRegistry>(
+            _moduleTemplates = mongoDatabase.GetCollection<Application>(
                 databaseSettings.Value.ModuleTemplatesCollectionName);
         }
 
-        public async Task<bool> CreateAsync(ModuleRegistry newObject)
+        public async Task<bool> CreateAsync(Application newObject)
         {
             if (await _moduleTemplates.Find(c => c.ModuleName == newObject.ModuleName).FirstOrDefaultAsync() != null) return false;
             await _moduleTemplates.InsertOneAsync(newObject);
             return true;
         }
 
-       
-
-        public async Task<bool> Exists(string ModuleName)
-        {
-            if (await _moduleTemplates.Find(c => c.ModuleName == ModuleName).FirstOrDefaultAsync() == null)
-                return false;
-            return true;
-        }
-
-        public async Task<List<ModuleRegistry>> FindAllAsync()
+        public async Task<List<Application>> FindAllAsync()
         {
             return await _moduleTemplates.Find(_ => true).ToListAsync();
         }
 
-        public async Task<ModuleRegistry?> FindByIdAsync(string ModuleName)
+        public async Task<Application?> FindByIdAsync(string ModuleName)
         {
             return await _moduleTemplates.Find(c => c.ModuleName == ModuleName).FirstOrDefaultAsync();
         }
@@ -57,7 +46,7 @@ namespace DatabaseApi.Services
             return true;
         }
 
-        public async Task<bool> UpdateAsync(string ModuleName, ModuleRegistry updatedObject)
+        public async Task<bool> UpdateAsync(string ModuleName, Application updatedObject)
         {
             if (await _moduleTemplates.Find(c => c.ModuleName == ModuleName).FirstOrDefaultAsync() == null) return false;
             if (!(await _moduleTemplates.ReplaceOneAsync(x => x.ModuleName == ModuleName, updatedObject)).IsAcknowledged) return false;

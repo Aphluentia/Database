@@ -38,11 +38,32 @@ namespace DatabaseApi.Services
             return true;
         }
 
-        public async Task<bool> UpdateAsync(string Email, Therapist updatedObject)
+        public async Task<bool> UpdateAsync(string Email, Therapist updatedTherapist)
         {
-            if (await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
+            var existingTherapist = await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync();
+            if (existingTherapist == null)
                 return false;
-            if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, updatedObject)).IsAcknowledged)
+            if (!string.IsNullOrEmpty(updatedTherapist.FirstName))
+                existingTherapist.FirstName = updatedTherapist.FirstName;
+
+            if (!string.IsNullOrEmpty(updatedTherapist.LastName))
+                existingTherapist.LastName = updatedTherapist.LastName;
+
+            if (!string.IsNullOrEmpty(updatedTherapist.Password))
+                existingTherapist.Password = updatedTherapist.Password;
+
+            if (updatedTherapist.Age != 0)
+                existingTherapist.Age = updatedTherapist.Age;
+
+            if (!string.IsNullOrEmpty(updatedTherapist.Credentials))
+                existingTherapist.Credentials = updatedTherapist.Credentials;
+
+            if (!string.IsNullOrEmpty(updatedTherapist.Description))
+                existingTherapist.Description = updatedTherapist.Description;
+
+            if (!string.IsNullOrEmpty(updatedTherapist.ProfilePicture))
+                existingTherapist.ProfilePicture = updatedTherapist.ProfilePicture;
+            if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, existingTherapist)).IsAcknowledged)
                 return false;
             return true;
         }
@@ -59,35 +80,17 @@ namespace DatabaseApi.Services
         {
             await _therapists.DeleteManyAsync(x => true);
         }
-
-        public async Task<ICollection<string>> GetPatients(string Email)
+        public async Task<bool> UpdatePatientsAsync(string Email, Therapist _therapist)
         {
             var therapist = await FindByIdAsync(Email);
-            if (therapist == null) return new List<string>();
-            return therapist.Patients;
-        }
-        public async Task<bool> RemovePatient(string Email, string PatientEmail)
-        {
-            var therapist = await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (therapist == null) return false;
-            therapist.Patients.Remove(PatientEmail);
-            if(!(await _therapists.ReplaceOneAsync(x => x.Email == Email, therapist)).IsAcknowledged) return false;
+            therapist.PatientsAccepted = _therapist.PatientsAccepted;
+            therapist.PatientRequests = _therapist.PatientRequests;
+            await _therapists.ReplaceOneAsync(x=>x.Email == Email, therapist);
             return true;
         }
-        public async Task<bool> AssignPatient(string Email, string PatientEmail)
-        {
-            var therapist = await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync();
-            if (therapist == null) return false;
-            therapist.Patients.Add(PatientEmail);
-            if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, therapist)).IsAcknowledged) return false;
-            return true;
-        }
-        public async Task<bool> Exists(string Email)
-        {
-            var therapists = await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync();
-            if (therapists == null) return false;
-            return true;
-        }
+        
+      
 
 
 

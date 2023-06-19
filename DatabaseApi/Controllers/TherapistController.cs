@@ -12,9 +12,11 @@ namespace DatabaseApi.Controllers
 
 
         private readonly ITherapistService _therapistService;
-        public TherapistController(ITherapistService therapistService)
+        private readonly IPatientService _patientService;
+        public TherapistController(ITherapistService therapistService, IPatientService patientService)
         {
             _therapistService = therapistService;
+            _patientService = patientService;
         }
 
         [HttpGet] //public Task<List<Therapist>> FindAllAsync();
@@ -39,6 +41,8 @@ namespace DatabaseApi.Controllers
         [HttpPost] //public Task<bool> CreateAsync(Therapist newObject);
         public async Task<ActionResult> CreateTherapist(Therapist newTherapist)
         {
+            newTherapist.PatientsAccepted = new HashSet<string>();
+            newTherapist.PatientRequests = new HashSet<string>();
             var success = await _therapistService.CreateAsync(newTherapist);
             if (success)
                 return Ok();
@@ -54,33 +58,7 @@ namespace DatabaseApi.Controllers
         [HttpPut("{email}")] //public Task<bool> UpdateAsync(string Email, Therapist updatedObject);
         public async Task<ActionResult> UpdateTherapist(string email, Therapist updatedTherapist)
         {
-            var existingTherapist = await _therapistService.FindByIdAsync(email);
-            if (existingTherapist == null)
-                return NotFound();
-
-            if (!string.IsNullOrEmpty(updatedTherapist.FirstName))
-                existingTherapist.FirstName = updatedTherapist.FirstName;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.LastName))
-                existingTherapist.LastName = updatedTherapist.LastName;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Password))
-                existingTherapist.Password = updatedTherapist.Password;
-
-            if (updatedTherapist.Age != 0)
-                existingTherapist.Age = updatedTherapist.Age;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Credentials))
-                existingTherapist.Credentials = updatedTherapist.Credentials;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Description))
-                existingTherapist.Description = updatedTherapist.Description;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.ProfilePicture))
-                existingTherapist.ProfilePicture = updatedTherapist.ProfilePicture;
-
-                
-            var success = await _therapistService.UpdateAsync(email, existingTherapist);
+            var success = await _therapistService.UpdateAsync(email, updatedTherapist);
             if (success)
                 return Ok();
             return BadRequest();
@@ -96,11 +74,54 @@ namespace DatabaseApi.Controllers
         }
 
         
-        [HttpGet("{email}/Patients")]  //public Task<ICollection<string>> GetPatients(string Email);
-        public async Task<ActionResult<List<string>>> GetPatients(string email)
+       
+
+        [HttpPut("{email}/Patient/{PatientEmail}")] //public Task<ICollection<string>> GetModules(string Email);
+        public async Task<ActionResult> AssignTherapist(string email, string PatientEmail)
         {
-            var patients = await _therapistService.GetPatients(email);
-            return Ok(patients);
+            var patient = await _patientService.FindByIdAsync(PatientEmail);
+            if (patient == null) return NotFound();
+
+            var therapist = await _therapistService.FindByIdAsync(email);
+            if (therapist == null) return NotFound();
+
+            if (!therapist.PatientRequests.Contains(PatientEmail)) return BadRequest();
+
+            therapist.PatientRequests.Remove(PatientEmail);
+            therapist.PatientsAccepted.Add(PatientEmail);
+
+            patient.RequestedTherapists.Remove(email);
+            patient.AcceptedTherapists.Add(email);
+
+            var success = await _therapistService.UpdatePatientsAsync(email, therapist);
+            if (!success) return BadRequest();
+
+            success = await _patientService.UpdateTherapistsAsync(PatientEmail, patient);
+            if (success)
+                return Ok();
+            return BadRequest();
+        }
+        [HttpDelete("{email}/Patient/{PatientEmail}")] //public Task<ICollection<string>> GetModules(string Email);
+        public async Task<ActionResult> RemovePatients(string email, string PatientEmail)
+        {
+            var patient = await _patientService.FindByIdAsync(email);
+            if (patient == null) return NotFound();
+
+            var therapist = await _therapistService.FindByIdAsync(email);
+            if (therapist == null) return NotFound();
+
+            therapist.PatientRequests.Remove(patient.Email);
+            therapist.PatientsAccepted.Remove(patient.Email);
+            patient.AcceptedTherapists.Remove(email);
+            patient.RequestedTherapists.Remove(email);
+
+            var success = await _therapistService.UpdatePatientsAsync(email, therapist);
+            if (!success) return BadRequest();
+
+            success = await _patientService.UpdateTherapistsAsync(PatientEmail, patient);
+            if (success)
+                return Ok();
+            return BadRequest();
         }
 
 
