@@ -104,7 +104,7 @@ namespace DatabaseApi.Controllers
         [HttpDelete("{email}/Patient/{PatientEmail}")] //public Task<ICollection<string>> GetModules(string Email);
         public async Task<ActionResult> RemovePatients(string email, string PatientEmail)
         {
-            var patient = await _patientService.FindByIdAsync(email);
+            var patient = await _patientService.FindByIdAsync(PatientEmail);
             if (patient == null) return NotFound();
 
             var therapist = await _therapistService.FindByIdAsync(email);

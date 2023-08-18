@@ -161,7 +161,6 @@ namespace DatabaseApi.Controllers
                     JsonDocument.Parse(updatedModule.Data.ToString());
                     module.Data = updatedModule.Data;
                     module.Checksum = updatedModule.Checksum;
-                    module.Timestamp = updatedModule.Timestamp;
                 }
                 catch (Exception ex)
                 {

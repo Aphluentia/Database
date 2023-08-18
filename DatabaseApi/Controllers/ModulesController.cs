@@ -76,7 +76,6 @@ namespace DatabaseApi.Controllers
             if (updatedModule.Data != null)
             {
                 existingModule.Data = updatedModule.Data;
-                existingModule.Timestamp = updatedModule.Timestamp;
                 existingModule.Checksum = updatedModule.Checksum;
             }
             

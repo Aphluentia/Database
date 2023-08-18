@@ -64,7 +64,7 @@ namespace DatabaseApi.Controllers
             var existingVersion = existingModuleTemplate.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
             if (existingVersion == null) return NotFound();
 
-            existingModuleTemplate.Versions = existingModuleTemplate.Versions.Where(c => (c.VersionId != updatedVersion.VersionId)).ToList();
+            existingModuleTemplate.Versions = existingModuleTemplate.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
       
             if (!string.IsNullOrEmpty(updatedVersion.HtmlCard)) existingVersion.HtmlCard = updatedVersion.HtmlCard;
             if (!string.IsNullOrEmpty(updatedVersion.HtmlDashboard)) existingVersion.HtmlDashboard = updatedVersion.HtmlDashboard;

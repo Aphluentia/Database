@@ -50,6 +50,9 @@ namespace DatabaseApi.Services
             if (!string.IsNullOrEmpty(updatedPatient.LastName))
                 existingPatient.LastName = updatedPatient.LastName;
 
+            if (!string.IsNullOrEmpty(updatedPatient.Password))
+                existingPatient.Password = updatedPatient.Password;
+
             if (!string.IsNullOrEmpty(updatedPatient.PhoneNumber))
                 existingPatient.PhoneNumber = updatedPatient.PhoneNumber;
 
