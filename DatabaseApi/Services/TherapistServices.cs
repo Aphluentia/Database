@@ -43,26 +43,7 @@ namespace DatabaseApi.Services
             var existingTherapist = await _therapists.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (existingTherapist == null)
                 return false;
-            if (!string.IsNullOrEmpty(updatedTherapist.FirstName))
-                existingTherapist.FirstName = updatedTherapist.FirstName;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.LastName))
-                existingTherapist.LastName = updatedTherapist.LastName;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Password))
-                existingTherapist.Password = updatedTherapist.Password;
-
-            if (updatedTherapist.Age != 0)
-                existingTherapist.Age = updatedTherapist.Age;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Credentials))
-                existingTherapist.Credentials = updatedTherapist.Credentials;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.Description))
-                existingTherapist.Description = updatedTherapist.Description;
-
-            if (!string.IsNullOrEmpty(updatedTherapist.ProfilePicture))
-                existingTherapist.ProfilePicture = updatedTherapist.ProfilePicture;
+         
             if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, existingTherapist)).IsAcknowledged)
                 return false;
             return true;
@@ -84,8 +65,8 @@ namespace DatabaseApi.Services
         {
             var therapist = await FindByIdAsync(Email);
             if (therapist == null) return false;
-            therapist.PatientsAccepted = _therapist.PatientsAccepted;
-            therapist.PatientRequests = _therapist.PatientRequests;
+            therapist.AcceptedPatients = _therapist.AcceptedPatients;
+            therapist.RequestedPatients = _therapist.RequestedPatients;
             await _therapists.ReplaceOneAsync(x=>x.Email == Email, therapist);
             return true;
         }

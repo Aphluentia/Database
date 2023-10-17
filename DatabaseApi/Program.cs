@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<MongoConfigSection>(builder.Configuration.GetSection("MongoConfigSection"));
 builder.Services.AddSingleton<ITherapistService, TherapistServices>();
 builder.Services.AddSingleton<IPatientService, PatientServices>();
-builder.Services.AddSingleton<IModuleRegistryService, ModuleRegistryService>();
+builder.Services.AddSingleton<IApplicationService, ApplicationService>();
 builder.Services.AddSingleton<IModuleService, ModuleService>();
 
 builder.Services.AddControllers();

@@ -11,6 +11,7 @@ namespace DatabaseApi.Services
         public Task<bool> RemoveByIdAsync(string Email);
         public Task RemoveAllAsync();
         public Task<ICollection<Module>> GetModules(string Email);
+        public Task<Module> FindModuleById(string Email, string ModuleId);
         public Task<bool> RemoveModule(string Email, string ModuleName);
         public Task<bool> UpdateTherapistsAsync(string Email, Patient _patient);
         public Task<bool> AddModule(string Email, Module module);

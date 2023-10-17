@@ -8,84 +8,85 @@ namespace DatabaseApi.Controllers
     [ApiController]
     public class ApplicationController : ControllerBase
     {
-        private readonly IModuleRegistryService _moduleTemplatesService;
-        public ApplicationController(IModuleRegistryService moduleTemplatesService)
+        private readonly IApplicationService _ApplicationsService;
+        public ApplicationController(IApplicationService ModuleDatasService)
         {
-            _moduleTemplatesService = moduleTemplatesService;
+            _ApplicationsService = ModuleDatasService;
         }
 
-        [HttpGet] //public Task<List<ModuleTemplate>> FindAllAsync();
-        public async Task<ActionResult<List<Application>>> GetAllModuleTemplates()
+        [HttpGet] //public Task<List<ModuleData>> FindAllAsync();
+        public async Task<ActionResult<List<Application>>> GetAllModuleDatas()
         {
-            var moduleTemplates = await _moduleTemplatesService.FindAllAsync();
-            return Ok(moduleTemplates);
+            var ModuleDatas = await _ApplicationsService.FindAllAsync();
+            return Ok(ModuleDatas);
         }
          
-        [HttpGet("{appId}")] //public Task<ModuleTemplate?> FindByIdAsync(string ModuleType);
-        public async Task<ActionResult<Application>> GetModuleTemplateById(string appId)
+        [HttpGet("{appId}")] //public Task<ModuleData?> FindByIdAsync(string ModuleType);
+        public async Task<ActionResult<Application>> GetModuleDataById(string appId)
         {
-            var moduleTemplate = await _moduleTemplatesService.FindByIdAsync(appId);
-            if (moduleTemplate == null)
+            var ModuleData = await _ApplicationsService.FindByIdAsync(appId);
+            if (ModuleData == null)
             {
                 return NotFound();
             }
-            return Ok(moduleTemplate);
+            return Ok(ModuleData);
         }
 
-        [HttpPost] //public Task<bool> CreateAsync(ModuleTemplate newObject);
-        public async Task<IActionResult> CreateModuleTemplate(Application newModuleTemplate)
+        [HttpPost] //public Task<bool> CreateAsync(ModuleData newObject);
+        public async Task<IActionResult> CreateModuleData(Application newModuleData)
         {
-            var success = await _moduleTemplatesService.CreateAsync(newModuleTemplate);
+            var success = await _ApplicationsService.CreateAsync(newModuleData);
             if (success)
                 return Ok();
             return BadRequest();
         }
    
 
-        [HttpPost("{appId}/Version")] //public Task<bool> UpdateAsync(string ModuleType, ModuleTemplate updatedObject);
+        [HttpPost("{appId}/Version")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
         public async Task<ActionResult> AddModuleVersion(string appId, ModuleVersion updatedVersion)
         {
-            var existingModuleTemplate = await _moduleTemplatesService.FindByIdAsync(appId);
-            if (existingModuleTemplate == null) return NotFound();
-            var version = existingModuleTemplate.Versions.Where(c=>c.VersionId == updatedVersion.VersionId).FirstOrDefault();
+            var existingModuleData = await _ApplicationsService.FindByIdAsync(appId);
+            if (existingModuleData == null) return NotFound();
+            var version = existingModuleData.Versions.Where(c=>c.VersionId == updatedVersion.VersionId).FirstOrDefault();
             if (version != null) return BadRequest();
-            existingModuleTemplate.Versions.Add(updatedVersion);
+            existingModuleData.Versions.Add(updatedVersion);
             
-            var success = await _moduleTemplatesService.UpdateAsync(appId, existingModuleTemplate);
+            var success = await _ApplicationsService.UpdateAsync(appId, existingModuleData);
             if (success)
                 return Ok();
             return BadRequest();
         }
-        [HttpPut("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleTemplate updatedObject);
+        [HttpPut("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
         public async Task<ActionResult> UpdateModuleVersion(string appId,string ModuleVersion, ModuleVersion updatedVersion)
         {
-            var existingModuleTemplate = await _moduleTemplatesService.FindByIdAsync(appId);
-            if (existingModuleTemplate == null) return NotFound();
-            var existingVersion = existingModuleTemplate.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
+            var existingModuleData = await _ApplicationsService.FindByIdAsync(appId);
+            if (existingModuleData == null) return NotFound();
+            var existingVersion = existingModuleData.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
             if (existingVersion == null) return NotFound();
 
-            existingModuleTemplate.Versions = existingModuleTemplate.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
+            existingModuleData.Versions = existingModuleData.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
       
             if (!string.IsNullOrEmpty(updatedVersion.HtmlCard)) existingVersion.HtmlCard = updatedVersion.HtmlCard;
             if (!string.IsNullOrEmpty(updatedVersion.HtmlDashboard)) existingVersion.HtmlDashboard = updatedVersion.HtmlDashboard;
+            existingVersion.DataStructure = updatedVersion.DataStructure;
 
-            existingModuleTemplate.Versions.Add(existingVersion);
-            var success = await _moduleTemplatesService.UpdateAsync(appId, existingModuleTemplate);
+            existingModuleData.Versions.Add(existingVersion);
+            var success = await _ApplicationsService.UpdateAsync(appId, existingModuleData);
             if (success)
                 return Ok();
             return BadRequest();
         }
-        [HttpDelete("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleTemplate updatedObject);
+        [HttpDelete("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
         public async Task<ActionResult> DeleteModuleVersion(string appId, string ModuleVersion)
         {
-            var existingModuleTemplate = await _moduleTemplatesService.FindByIdAsync(appId);
-            if (existingModuleTemplate == null) return NotFound();
-            var existingVersion = existingModuleTemplate.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
+            var existingModuleData = await _ApplicationsService.FindByIdAsync(appId);
+            if (existingModuleData == null) return NotFound();
+            var existingVersion = existingModuleData.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
             if (existingVersion == null) return NotFound();
 
-            existingModuleTemplate.Versions = existingModuleTemplate.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
+            existingModuleData.Versions = existingModuleData.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
 
-            var success = await _moduleTemplatesService.UpdateAsync(appId, existingModuleTemplate);
+            var success = await _ApplicationsService.UpdateAsync(appId, existingModuleData);
             if (success)
                 return Ok();
             return BadRequest();
@@ -93,16 +94,16 @@ namespace DatabaseApi.Controllers
 
 
         [HttpDelete] //public Task RemoveAllAsync();
-        public async Task<ActionResult> RemoveAllModuleTemplates()
+        public async Task<ActionResult> RemoveAllModuleDatas()
         {
-            await _moduleTemplatesService.RemoveAllAsync();
+            await _ApplicationsService.RemoveAllAsync();
             return Ok();
         }
 
         [HttpDelete("{appId}")] //public Task<bool> RemoveByIdAsync(string ModuleType);
-        public async Task<ActionResult> RemoveModuleTemplate(string appId)
+        public async Task<ActionResult> RemoveModuleData(string appId)
         {
-            var success = await _moduleTemplatesService.RemoveByIdAsync(appId);
+            var success = await _ApplicationsService.RemoveByIdAsync(appId);
             if (success)
                 return Ok();
             return BadRequest();

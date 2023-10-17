@@ -41,8 +41,8 @@ namespace DatabaseApi.Controllers
         [HttpPost] //public Task<bool> CreateAsync(Therapist newObject);
         public async Task<ActionResult> CreateTherapist(Therapist newTherapist)
         {
-            newTherapist.PatientsAccepted = new HashSet<string>();
-            newTherapist.PatientRequests = new HashSet<string>();
+            newTherapist.AcceptedPatients = new HashSet<string>();
+            newTherapist.RequestedPatients = new HashSet<string>();
             var success = await _therapistService.CreateAsync(newTherapist);
             if (success)
                 return Ok();
@@ -85,20 +85,30 @@ namespace DatabaseApi.Controllers
             var therapist = await _therapistService.FindByIdAsync(email);
             if (therapist == null) return NotFound();
 
-            if (!therapist.PatientRequests.Contains(PatientEmail)) return BadRequest();
 
-            therapist.PatientRequests.Remove(PatientEmail);
-            therapist.PatientsAccepted.Add(PatientEmail);
+            if (patient.RequestedTherapists.Contains(email)) return BadRequest("Patient Already Requested");
+            if (therapist.AcceptedPatients.Contains(PatientEmail))
+                return BadRequest("Patient Already Accepted");
 
-            patient.RequestedTherapists.Remove(email);
-            patient.AcceptedTherapists.Add(email);
 
-            var success = await _therapistService.UpdatePatientsAsync(email, therapist);
-            if (!success) return BadRequest();
+            if (therapist.RequestedPatients.Contains(PatientEmail))
+            {
+                therapist.RequestedPatients.Remove(PatientEmail);
+                therapist.AcceptedPatients.Add(PatientEmail);
+                var TherapistUpdatedSuccess = await _therapistService.UpdatePatientsAsync(email, therapist);
+                if (!TherapistUpdatedSuccess)
+                    return BadRequest("Failed to Update Therapist");
+                patient.AcceptedTherapists.Add(email);
+            }
+            else
+            {
+                patient.RequestedTherapists.Add(email);
+            }
 
-            success = await _patientService.UpdateTherapistsAsync(PatientEmail, patient);
+            var success = await _patientService.UpdateTherapistsAsync(PatientEmail, patient);
             if (success)
                 return Ok();
+
             return BadRequest();
         }
         [HttpDelete("{email}/Patient/{PatientEmail}")] //public Task<ICollection<string>> GetModules(string Email);
@@ -110,10 +120,12 @@ namespace DatabaseApi.Controllers
             var therapist = await _therapistService.FindByIdAsync(email);
             if (therapist == null) return NotFound();
 
-            therapist.PatientRequests.Remove(patient.Email);
-            therapist.PatientsAccepted.Remove(patient.Email);
+
+            therapist.RequestedPatients.Remove(patient.Email);
+            therapist.AcceptedPatients.Remove(patient.Email);
             patient.AcceptedTherapists.Remove(email);
             patient.RequestedTherapists.Remove(email);
+
 
             var success = await _therapistService.UpdatePatientsAsync(email, therapist);
             if (!success) return BadRequest();

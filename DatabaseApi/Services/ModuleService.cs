@@ -9,7 +9,7 @@ namespace DatabaseApi.Services
     public class ModuleService: IModuleService
     {
         private readonly IMongoCollection<Module> _modules;
-        private readonly IMongoCollection<Application> _moduleTemplates;
+        private readonly IMongoCollection<Application> _Applications;
         public ModuleService(IOptions<MongoConfigSection> databaseSettings)
         {
             var mongoDatabase = new MongoClient(
@@ -18,8 +18,8 @@ namespace DatabaseApi.Services
             _modules = mongoDatabase.GetCollection<Module>(
                 databaseSettings.Value.ModulesCollectionName);
 
-            _moduleTemplates = mongoDatabase.GetCollection<Application>(
-                databaseSettings.Value.ModuleTemplatesCollectionName);
+            _Applications = mongoDatabase.GetCollection<Application>(
+                databaseSettings.Value.ApplicationsCollectionName);
         }
         public async Task<bool> CreateAsync(Module newObject)
         {

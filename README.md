@@ -8,3 +8,8 @@ Contains the Project Database and the API that performs CRUD operations
 *API Setup*  
 - docker build . -t databaseapi  cd ..
 - docker run --name DatabaseApi -p 9010:443 -p 8010:80 -d databaseapi
+
+
+
+
+        

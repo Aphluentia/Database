@@ -29,10 +29,8 @@ namespace DatabaseApi.Services
 
         public async Task<bool> CreateAsync(Patient newObject)
         {
-            if (await _patients.Find(c => c.Email == newObject.Email || c.WebPlatform.WebPlatformId == newObject.WebPlatform.WebPlatformId).FirstOrDefaultAsync() != null)
+            if (await _patients.Find(c => c.Email == newObject.Email).FirstOrDefaultAsync() != null)
                 return false;
-
-            newObject.WebPlatform.Modules = new List<Module>();
 
             await _patients.InsertOneAsync(newObject);
             return true;
@@ -43,34 +41,6 @@ namespace DatabaseApi.Services
             var existingPatient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (existingPatient == null)
                 return false;
-
-            if (!string.IsNullOrEmpty(updatedPatient.FirstName))
-                existingPatient.FirstName = updatedPatient.FirstName;
-
-            if (!string.IsNullOrEmpty(updatedPatient.LastName))
-                existingPatient.LastName = updatedPatient.LastName;
-
-            if (!string.IsNullOrEmpty(updatedPatient.Password))
-                existingPatient.Password = updatedPatient.Password;
-
-            if (!string.IsNullOrEmpty(updatedPatient.PhoneNumber))
-                existingPatient.PhoneNumber = updatedPatient.PhoneNumber;
-
-            if (!string.IsNullOrEmpty(updatedPatient.CountryCode))
-                existingPatient.CountryCode = updatedPatient.CountryCode;
-
-            if (updatedPatient.Age != 0)
-                existingPatient.Age = updatedPatient.Age;
-
-            if (!string.IsNullOrEmpty(updatedPatient.ConditionName))
-                existingPatient.ConditionName = updatedPatient.ConditionName;
-
-            if (updatedPatient.ConditionAcquisitionDate != DateTime.MinValue)
-                existingPatient.ConditionAcquisitionDate = updatedPatient.ConditionAcquisitionDate;
-
-            if (!string.IsNullOrEmpty(updatedPatient.ProfilePicture))
-                existingPatient.ProfilePicture = updatedPatient.ProfilePicture;
-           
             await _patients.ReplaceOneAsync(x => x.Email == Email, existingPatient);
             return true;
         }
@@ -93,7 +63,7 @@ namespace DatabaseApi.Services
         {
             if (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync() == null)
                 return null;
-            return (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync()).WebPlatform.Modules;
+            return (await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync()).Modules;
         }
 
         public async Task<bool> RemoveModule(string Email, string ModuleId)
@@ -101,9 +71,9 @@ namespace DatabaseApi.Services
             var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (patient == null)
                 return false;
-            var m = patient.WebPlatform.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
+            var m = patient.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
             if (m == null) return false;
-            patient.WebPlatform.Modules.Remove(m);
+            patient.Modules.Remove(m);
             if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
             return true;
         }
@@ -113,7 +83,7 @@ namespace DatabaseApi.Services
             if (patient == null)
                 return false;
            
-            patient.WebPlatform.Modules.Add(module);
+            patient.Modules.Add(module);
             if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
             return true;
         }
@@ -122,10 +92,10 @@ namespace DatabaseApi.Services
             var patient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (patient == null)
                 return false;
-            var moduleExists = patient.WebPlatform.Modules.Where(c=>c.Id == ModuleId).FirstOrDefault();
+            var moduleExists = patient.Modules.Where(c=>c.Id == ModuleId).FirstOrDefault();
             if (moduleExists == null) return false;
-            patient.WebPlatform.Modules.Remove(moduleExists);
-            patient.WebPlatform.Modules.Add(module);
+            patient.Modules.Remove(moduleExists);
+            patient.Modules.Add(module);
             if (!(await _patients.ReplaceOneAsync(c => c.Email == Email, patient)).IsAcknowledged) return false;
             return true;
         }
@@ -138,6 +108,12 @@ namespace DatabaseApi.Services
             pat.RequestedTherapists= _patient.RequestedTherapists;
             await _patients.ReplaceOneAsync(x=>x.Email == Email, pat);
             return true;
+        }
+
+        public async Task<Module?> FindModuleById(string Email, string ModuleId)
+        {
+            var pat = await FindByIdAsync(Email);
+            return pat.Modules.FirstOrDefault(c => c.Id == ModuleId);
         }
     }
 }

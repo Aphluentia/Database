@@ -14,8 +14,8 @@ namespace DatabaseApi.Controllers
         private readonly IPatientService _patientService;
         private readonly ITherapistService _therapistService;
         private readonly IModuleService _moduleService;
-        private readonly IModuleRegistryService _moduleRegistryService;
-        public PatientController(IPatientService patientService, ITherapistService therapistService, IModuleService moduleService, IModuleRegistryService moduleRegistryService)
+        private readonly IApplicationService _moduleRegistryService;
+        public PatientController(IPatientService patientService, ITherapistService therapistService, IModuleService moduleService, IApplicationService moduleRegistryService)
         {
             _patientService = patientService;
             _therapistService = therapistService;
@@ -43,9 +43,6 @@ namespace DatabaseApi.Controllers
         [HttpPost] //public Task<bool> CreateAsync(Patient newObject);
         public async Task<ActionResult> CreatePatient([FromBody] Patient newPatient)
         {
-            newPatient.AcceptedTherapists = new HashSet<string>();
-            newPatient.RequestedTherapists = new HashSet<string>();
-            newPatient.WebPlatform.Modules = new HashSet<Module>();
             var success = await _patientService.CreateAsync(newPatient);
             if (success)
                 return Ok();
@@ -87,15 +84,21 @@ namespace DatabaseApi.Controllers
             return Ok(modules);
         }
 
-       
+        [HttpGet("{email}/Modules/{ModuleId}")] //public Task<ICollection<string>> GetModules(string Email);
+        public async Task<ActionResult<ICollection<Module>>> GetPatientModuleById(string email, string ModuleId)
+        {
+            var modules = await _patientService.FindModuleById(email, ModuleId);
+            return Ok(modules);
+        }
+
         [HttpPost("{email}/Modules/{ModuleId}")] //public Task<ICollection<string>> GetModules(string Email);
         public async Task<ActionResult> AddModuleFromRegistry(string email, string ModuleId)
         {
             var patient = await _patientService.FindByIdAsync(email);
-            if (patient == null) return NotFound();
+            if (patient == null) return NotFound("Patient Not Found");
 
             var newModule = await _moduleService.FindByIdAsync(ModuleId);
-            if (newModule == null) return NotFound();
+            if (newModule == null) return NotFound("Module Not Found");
 
             await _moduleService.RemoveByIdAsync(newModule.Id);
              
@@ -110,69 +113,40 @@ namespace DatabaseApi.Controllers
         {
             var patient = await _patientService.FindByIdAsync(email);
             if (patient == null) return NotFound();
-
-            var moduleTemplate = await _moduleRegistryService.FindByIdAsync(newModule.ModuleTemplate.ModuleName);
-            if (moduleTemplate == null) return NotFound();
-
-            var moduleVersion = moduleTemplate.Versions.Where(c => c.VersionId == newModule.ModuleTemplate.VersionId).FirstOrDefault();
-            if (moduleVersion == null) return NotFound();
-
-            var cModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
-            newModule.ModuleTemplate = cModuleTemplate;
-            try
-            {
-                JsonDocument.Parse(newModule.Data.ToString());
-            }
-            catch (JsonException ex)
-            {
-                return BadRequest(ex);
-            }
-            if (patient.WebPlatform.Modules.Any(c => c.Id == newModule.Id)) return BadRequest();
+          
+            if (patient.Modules.Any(c => c.Id == newModule.Id)) return BadRequest("Module Already Exists");
              
             var success = await _patientService.AddModule(email, newModule);
             if (success)
                 return Ok();
             return BadRequest();
         }
+
         [HttpPut("{email}/Modules/{ModuleId}")]
-        public async Task<IActionResult> UpdatePatientModuleVersion(string email, string ModuleId, string? Version, [FromBody] Module updatedModule)
+        public async Task<IActionResult> UpdatePatientModule(string email, string ModuleId, [FromBody] Module updatedModule)
         {
             var patient = await _patientService.FindByIdAsync(email);
             if (patient == null)
                 return NotFound();
-            var module = patient.WebPlatform.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
-            if (module == null) return NotFound();
-            if (!string.IsNullOrEmpty(Version))
+            var existingModule = patient.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
+            if (existingModule == null) return NotFound();
+
+            if (updatedModule.ModuleData.DataStructure != null)
             {
-                var moduleTemplate = await _moduleRegistryService.FindByIdAsync(module.ModuleTemplate.ModuleName);
-                if (moduleTemplate == null) return NotFound();
-
-                var moduleVersion = moduleTemplate.Versions.Where(c => c.VersionId == Version).FirstOrDefault();
-                if (moduleVersion == null) return NotFound();
-
-                var newCustomModuleTemplate = CustomModuleTemplate.FromModuleTemplate(moduleTemplate, moduleVersion);
-
-                module.ModuleTemplate = newCustomModuleTemplate;
+                existingModule.ModuleData.DataStructure = updatedModule.ModuleData.DataStructure;
             }
-            if (!string.IsNullOrEmpty(updatedModule.Data))
+            if (!string.IsNullOrEmpty(updatedModule.ModuleData.HtmlCard))
             {
-                try
-                {
-                    JsonDocument.Parse(updatedModule.Data.ToString());
-                    module.Data = updatedModule.Data;
-                    module.Checksum = updatedModule.Checksum;
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex);
-                }
-             
-
+                existingModule.ModuleData.HtmlCard = updatedModule.ModuleData.HtmlCard;
             }
-            if (!string.IsNullOrEmpty(updatedModule.ModuleTemplate.HtmlCard)) module.ModuleTemplate.HtmlCard = updatedModule.ModuleTemplate.HtmlCard;
-            if (!string.IsNullOrEmpty(updatedModule.ModuleTemplate.HtmlDashboard)) module.ModuleTemplate.HtmlDashboard = updatedModule.ModuleTemplate.HtmlDashboard;
-            module.ModuleTemplate.Timestamp = DateTime.UtcNow;
-            var success = await _patientService.UpdateModule(email, ModuleId, module);
+            if (!string.IsNullOrEmpty(updatedModule.ModuleData.HtmlDashboard))
+            {
+                existingModule.ModuleData.HtmlDashboard = updatedModule.ModuleData.HtmlDashboard;
+            }
+            existingModule.ModuleData.Timestamp = updatedModule.ModuleData.Timestamp;
+            existingModule.ModuleData.Checksum = updatedModule.ModuleData.Checksum;
+
+            var success = await _patientService.UpdateModule(email, ModuleId, existingModule);
             if (success)
                 return Ok();
             return BadRequest();
@@ -199,16 +173,25 @@ namespace DatabaseApi.Controllers
 
             var therapist = await _therapistService.FindByIdAsync(TherapistEmail);
             if (therapist == null) return NotFound();
-            if (patient.AcceptedTherapists.Contains(TherapistEmail))
-                return BadRequest();
 
-            therapist.PatientRequests.Add(patient.Email);
-            patient.RequestedTherapists.Add(TherapistEmail);
+            if (therapist.RequestedPatients.Contains(email)) return BadRequest("Therapist Already Requested");
+            if (patient.AcceptedTherapists.Contains(TherapistEmail))
+                return BadRequest("Therapist Already Accepted");
+            if (patient.RequestedTherapists.Contains(TherapistEmail))
+            {
+                patient.RequestedTherapists.Remove(TherapistEmail);
+                patient.AcceptedTherapists.Add(TherapistEmail);
+                var PatientUpdatedSuccess = await _patientService.UpdateTherapistsAsync(email, patient);
+                if (!PatientUpdatedSuccess)
+                    return BadRequest("Failed to Update Patient");
+                therapist.AcceptedPatients.Add(email);
+            }
+            else
+            {
+                therapist.RequestedPatients.Add(email);
+            }
 
             var success = await _therapistService.UpdatePatientsAsync(TherapistEmail, therapist);
-            if (!success) return BadRequest();
-
-            success = await _patientService.UpdateTherapistsAsync(email, patient);
             if (success)
                 return Ok();
             return BadRequest();
@@ -222,8 +205,8 @@ namespace DatabaseApi.Controllers
             var therapist = await _therapistService.FindByIdAsync(TherapistEmail);
             if (therapist == null) return NotFound();
 
-            therapist.PatientRequests.Remove(patient.Email);
-            therapist.PatientsAccepted.Remove(patient.Email);
+            therapist.RequestedPatients.Remove(patient.Email);
+            therapist.AcceptedPatients.Remove(patient.Email);
             patient.AcceptedTherapists.Remove(TherapistEmail);
             patient.RequestedTherapists.Remove(TherapistEmail);
 
