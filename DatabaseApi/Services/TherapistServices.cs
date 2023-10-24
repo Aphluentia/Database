@@ -44,7 +44,7 @@ namespace DatabaseApi.Services
             if (existingTherapist == null)
                 return false;
          
-            if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, existingTherapist)).IsAcknowledged)
+            if (!(await _therapists.ReplaceOneAsync(x => x.Email == Email, updatedTherapist)).IsAcknowledged)
                 return false;
             return true;
         }

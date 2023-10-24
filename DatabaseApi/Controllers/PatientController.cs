@@ -131,22 +131,7 @@ namespace DatabaseApi.Controllers
             var existingModule = patient.Modules.Where(c => c.Id == ModuleId).FirstOrDefault();
             if (existingModule == null) return NotFound();
 
-            if (updatedModule.ModuleData.DataStructure != null)
-            {
-                existingModule.ModuleData.DataStructure = updatedModule.ModuleData.DataStructure;
-            }
-            if (!string.IsNullOrEmpty(updatedModule.ModuleData.HtmlCard))
-            {
-                existingModule.ModuleData.HtmlCard = updatedModule.ModuleData.HtmlCard;
-            }
-            if (!string.IsNullOrEmpty(updatedModule.ModuleData.HtmlDashboard))
-            {
-                existingModule.ModuleData.HtmlDashboard = updatedModule.ModuleData.HtmlDashboard;
-            }
-            existingModule.ModuleData.Timestamp = updatedModule.ModuleData.Timestamp;
-            existingModule.ModuleData.Checksum = updatedModule.ModuleData.Checksum;
-
-            var success = await _patientService.UpdateModule(email, ModuleId, existingModule);
+            var success = await _patientService.UpdateModule(email, ModuleId, updatedModule);
             if (success)
                 return Ok();
             return BadRequest();

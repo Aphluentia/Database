@@ -41,7 +41,7 @@ namespace DatabaseApi.Services
             var existingPatient = await _patients.Find(c => c.Email == Email).FirstOrDefaultAsync();
             if (existingPatient == null)
                 return false;
-            await _patients.ReplaceOneAsync(x => x.Email == Email, existingPatient);
+            await _patients.ReplaceOneAsync(x => x.Email == Email, updatedPatient);
             return true;
         }
 
