@@ -42,40 +42,22 @@ namespace DatabaseApi.Controllers
         }
    
 
-        [HttpPost("{appId}/Version")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
-        public async Task<ActionResult> AddModuleVersion(string appId, ModuleVersion updatedVersion)
+        [HttpPost("{applicationName}/Version")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
+        public async Task<ActionResult> AddModuleVersion(string applicationName, ModuleVersion updatedVersion)
         {
-            var existingModuleData = await _ApplicationsService.FindByIdAsync(appId);
+            var existingModuleData = await _ApplicationsService.FindByIdAsync(applicationName);
             if (existingModuleData == null) return NotFound();
+
             var version = existingModuleData.Versions.Where(c=>c.VersionId == updatedVersion.VersionId).FirstOrDefault();
             if (version != null) return BadRequest();
             existingModuleData.Versions.Add(updatedVersion);
             
-            var success = await _ApplicationsService.UpdateAsync(appId, existingModuleData);
+            var success = await _ApplicationsService.UpdateAsync(applicationName, existingModuleData);
             if (success)
                 return Ok();
             return BadRequest();
         }
-        [HttpPut("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
-        public async Task<ActionResult> UpdateModuleVersion(string appId,string ModuleVersion, ModuleVersion updatedVersion)
-        {
-            var existingModuleData = await _ApplicationsService.FindByIdAsync(appId);
-            if (existingModuleData == null) return NotFound();
-            var existingVersion = existingModuleData.Versions.Where(c => (c.VersionId == ModuleVersion)).FirstOrDefault();
-            if (existingVersion == null) return NotFound();
-
-            existingModuleData.Versions = existingModuleData.Versions.Where(c => (c.VersionId != ModuleVersion)).ToList();
-      
-            if (!string.IsNullOrEmpty(updatedVersion.HtmlCard)) existingVersion.HtmlCard = updatedVersion.HtmlCard;
-            if (!string.IsNullOrEmpty(updatedVersion.HtmlDashboard)) existingVersion.HtmlDashboard = updatedVersion.HtmlDashboard;
-            existingVersion.DataStructure = updatedVersion.DataStructure;
-
-            existingModuleData.Versions.Add(existingVersion);
-            var success = await _ApplicationsService.UpdateAsync(appId, existingModuleData);
-            if (success)
-                return Ok();
-            return BadRequest();
-        }
+     
         [HttpDelete("{appId}/Version/{ModuleVersion}")] //public Task<bool> UpdateAsync(string ModuleType, ModuleData updatedObject);
         public async Task<ActionResult> DeleteModuleVersion(string appId, string ModuleVersion)
         {

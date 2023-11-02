@@ -7,6 +7,7 @@ namespace DatabaseApi.Models.Entities
         [BsonId]
         public string VersionId { get; set; }
         public string ApplicationName { get; set; }
+        public string ActiveContextName { get; set; }
         public ICollection<DataPoint> DataStructure { get; set; }
         public string? HtmlCard { get; set; }
         public string? HtmlDashboard { get; set; }

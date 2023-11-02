@@ -52,8 +52,6 @@ namespace DatabaseApi.Controllers
          
             var existingModule = await _Service.FindByIdAsync(id);
             if (existingModule == null) return NotFound();
-
-           
           
             var success = await _Service.UpdateAsync(id, updatedModule);
             if (success)
