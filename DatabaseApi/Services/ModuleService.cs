@@ -1,0 +1,65 @@
+﻿using DatabaseApi.Configurations;
+using DatabaseApi.Models.Entities;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using ThirdParty.BouncyCastle.Utilities.IO.Pem;
+
+namespace DatabaseApi.Services
+{
+    public class ModuleService: IModuleService
+    {
+        private readonly IMongoCollection<Module> _modules;
+        private readonly IMongoCollection<Application> _Applications;
+        public ModuleService(IOptions<MongoConfigSection> databaseSettings)
+        {
+            var mongoDatabase = new MongoClient(
+                   databaseSettings.Value.ConnectionString).GetDatabase(databaseSettings.Value.DatabaseName);
+
+            _modules = mongoDatabase.GetCollection<Module>(
+                databaseSettings.Value.ModulesCollectionName);
+
+            _Applications = mongoDatabase.GetCollection<Application>(
+                databaseSettings.Value.ApplicationsCollectionName);
+        }
+        public async Task<bool> CreateAsync(Module newObject)
+        {
+            if (await _modules.Find(c => c.Id == newObject.Id).FirstOrDefaultAsync() != null) return false;
+            await _modules.InsertOneAsync(newObject);
+            return true;
+        }
+
+        public async Task<List<Module>> FindAllAsync()
+        {
+            return await _modules.Find(_ => true).ToListAsync();
+        }
+
+        public async Task<Module?> FindByIdAsync(string moduleId)
+        {
+            return await _modules.Find(c => c.Id == moduleId).FirstOrDefaultAsync();
+            
+        }
+
+        public async Task RemoveAllAsync()
+        {
+            await _modules.DeleteManyAsync(x => true);
+        }
+
+        public async Task<bool> RemoveByIdAsync(string moduleId)
+        {
+            if (await _modules.Find(c => c.Id == moduleId).FirstOrDefaultAsync() == null) return false;
+            await _modules.DeleteOneAsync(x => x.Id == moduleId);
+            return true;
+        }
+
+        public async Task<bool> UpdateAsync(string moduleId, Module updatedModule)
+        {
+            var existingModule = await _modules.Find(c => c.Id == moduleId).FirstOrDefaultAsync();
+            if (existingModule == null) return false;
+            if (!(await _modules.ReplaceOneAsync(x => x.Id == moduleId, updatedModule)).IsAcknowledged) return false;
+
+            return true;
+        }
+     
+
+    }
+}
